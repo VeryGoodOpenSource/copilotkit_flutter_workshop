@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - apps/calaverita_app
+  - shared/app_ui
   - features/calaverita/calaverita_domain
   - features/calaverita/calaverita_data
   - features/calaverita/calaverita_presentation

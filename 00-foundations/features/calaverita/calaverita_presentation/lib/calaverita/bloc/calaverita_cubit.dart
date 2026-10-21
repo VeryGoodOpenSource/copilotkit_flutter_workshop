@@ -18,6 +18,17 @@ class CalaveritaCubit extends Cubit<CalaveritaState> {
 
   void toneChanged(Tone tone) => _editDraft(state.draft.copyWith(tone: tone));
 
+  /// Makes the skull wear [variant] of [part], or take it off with
+  /// [SkullStyle.none].
+  void skullPartChanged(SkullPart part, String variant) => _editDraft(
+    state.draft.copyWith(skull: state.draft.skull.wearing(part, variant)),
+  );
+
+  /// Paints the skull in [color], as `#rrggbb`.
+  void skullColorChanged(String color) => _editDraft(
+    state.draft.copyWith(skull: state.draft.skull.withColor(color)),
+  );
+
   void _editDraft(CalaveritaDraft draft) => emit(state.copyWith(draft: draft));
 
   /// Writes a calaverita for the current form, if it is complete.

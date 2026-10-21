@@ -42,6 +42,28 @@ void main() {
     );
 
     blocTest<CalaveritaCubit, CalaveritaState>(
+      'dresses and paints the skull',
+      build: build,
+      act: (cubit) => cubit
+        ..skullPartChanged(SkullPart.hat, 'sombrero')
+        ..skullColorChanged('#12a5a0')
+        ..skullPartChanged(SkullPart.hat, SkullStyle.none),
+      expect: () => const [
+        CalaveritaState(
+          draft: CalaveritaDraft(skull: SkullStyle(hat: 'sombrero')),
+        ),
+        CalaveritaState(
+          draft: CalaveritaDraft(
+            skull: SkullStyle(color: '#12a5a0', hat: 'sombrero'),
+          ),
+        ),
+        CalaveritaState(
+          draft: CalaveritaDraft(skull: SkullStyle(color: '#12a5a0')),
+        ),
+      ],
+    );
+
+    blocTest<CalaveritaCubit, CalaveritaState>(
       'writes a calaverita for a complete draft',
       setUp: () =>
           when(() => repository.generate(any()))

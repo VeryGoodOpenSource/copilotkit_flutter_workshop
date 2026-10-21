@@ -1,49 +1,156 @@
+import 'package:app_ui/app_ui.dart';
 import 'package:calaverita_presentation/calaverita/bloc/calaverita_cubit.dart';
 import 'package:calaverita_presentation/calaverita/bloc/calaverita_state.dart';
-import 'package:calaverita_presentation/calaverita/views/calaverita_card.dart';
-import 'package:calaverita_presentation/calaverita/views/calaverita_form.dart';
-import 'package:flutter/material.dart';
+import 'package:calaverita_presentation/calaverita/views/details_panel.dart';
+import 'package:calaverita_presentation/calaverita/views/stage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The form on top, the finished calaverita below.
+/// Width at or above which the columns are side by side.
+const _desktopBreakpoint = 1000.0;
+
+/// The one screen: the details on the left and the stage in the middle,
+/// with [trailingPanel] on the right.
 class CalaveritaPage extends StatelessWidget {
-  const CalaveritaPage({super.key});
+  const CalaveritaPage({this.trailingPanel, super.key});
+
+  /// A panel the app puts beside the stage, or below it on a narrow screen.
+  final Widget? trailingPanel;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('💀 Calaverita Generator')),
+      backgroundColor: context.palette.ground,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                const CalaveritaForm(),
-                const SizedBox(height: 24),
-                BlocBuilder<CalaveritaCubit, CalaveritaState>(
-                  buildWhen: (previous, current) =>
-                      previous.calaverita != current.calaverita ||
-                      previous.status != current.status,
-                  builder: (context, state) {
-                    if (state.status == GenerationStatus.failure) {
-                      return Text(
-                        'The skull lost its voice. Try again.',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      );
-                    }
-                    final calaverita = state.calaverita;
-                    if (calaverita == null) return const SizedBox.shrink();
-                    return CalaveritaCard(calaverita: calaverita);
-                  },
-                ),
-              ],
+            constraints: const BoxConstraints(maxWidth: 1680),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4l,
+                AppSpacing.x3l,
+                AppSpacing.x4l,
+                AppSpacing.x4l,
+              ),
+              child: Column(
+                children: [
+                  const _Header(),
+                  const SizedBox(height: AppSpacing.x3l),
+                  Expanded(child: _Layout(trailingPanel: trailingPanel)),
+                ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [p.navy, p.navyAlt]),
+        borderRadius: AppRadii.cardBorder,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x5l,
+          vertical: AppSpacing.xl,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Calaverita Generator',
+                style: AppTypography.title.copyWith(color: p.onNavy),
+              ),
+              Text(
+                'A funny rhyming skull for someone you love.',
+                style: AppTypography.small.copyWith(color: p.onNavyMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Layout extends StatelessWidget {
+  const _Layout({this.trailingPanel});
+
+  final Widget? trailingPanel;
+
+  @override
+  Widget build(BuildContext context) {
+    final panel = trailingPanel;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _desktopBreakpoint) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacing.x3l,
+            children: [
+              const SizedBox(width: 380, child: _Details()),
+              const Expanded(child: _Stage()),
+              if (panel != null) SizedBox(width: 420, child: panel),
+            ],
+          );
+        }
+        return SingleChildScrollView(
+          child: Column(
+            spacing: AppSpacing.x3l,
+            children: [
+              const SizedBox(height: 640, child: _Stage()),
+              if (panel != null) SizedBox(height: 520, child: panel),
+              const SizedBox(height: 760, child: _Details()),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Details extends StatelessWidget {
+  const _Details();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<CalaveritaCubit>();
+    return BlocBuilder<CalaveritaCubit, CalaveritaState>(
+      builder: (context, state) => DetailsPanel(
+        draft: state.draft,
+        canGenerate: state.canGenerate,
+        isGenerating: state.status == GenerationStatus.generating,
+        onNameChanged: cubit.nameChanged,
+        onJobChanged: cubit.jobChanged,
+        onToneChanged: cubit.toneChanged,
+        onSkullPartChanged: cubit.skullPartChanged,
+        onSkullColorChanged: cubit.skullColorChanged,
+        onGenerate: cubit.generate,
+      ),
+    );
+  }
+}
+
+class _Stage extends StatelessWidget {
+  const _Stage();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CalaveritaCubit, CalaveritaState>(
+      builder: (context, state) => Stage(
+        skull: state.draft.skull,
+        status: state.status,
+        calaverita: state.calaverita,
       ),
     );
   }

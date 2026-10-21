@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<g fill="{{fill}}" fill-opacity=".42" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"><path d="M98 180 C118 172 150 172 175 178 C194 184 198 206 190 224 C182 244 150 254 128 246 C108 238 100 214 98 180Z"/><g transform="translate(400 0) scale(-1 1)"><path d="M98 180 C118 172 150 172 175 178 C194 184 198 206 190 224 C182 244 150 254 128 246 C108 238 100 214 98 180Z"/></g></g><g fill="none" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"><path d="M192 204 Q200 198 208 204"/><path d="M98 182 L70 168 M302 182 L330 168"/></g>
+</svg>

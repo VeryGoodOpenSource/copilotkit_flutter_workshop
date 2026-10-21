@@ -31,6 +31,7 @@ class TemplateCalaveritasRepository implements ICalaveritasRepository {
       name: name,
       job: job,
       tone: draft.tone,
+      skull: draft.skull,
       lines: [
         for (final line in verse)
           line.replaceAll('{name}', name).replaceAll('{job}', job),
