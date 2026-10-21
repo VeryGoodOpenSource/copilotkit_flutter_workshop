@@ -78,30 +78,63 @@ fvm flutter run -d chrome
 
 ### What to try
 
-- **00:** type a name and a job, pick a tone, put a sombrero on the skull and
-  press **Write my calaverita**.
-- **01:** in the copilot panel, write *"Ana is a pilot, make it sarcastic"*. The
-  details fill in and the skull gets dressed. Then edit a field by hand and ask
-  *"who is this for?"*: the agent sees your edit. The **Shared state** is the
-  one thing the form, the skull and the agent all read and write.
-- **02:** write *"Mario is a chef, dramatic please. Write his calaverita!"*. The
-  agent writes four lines: a card with the skull portrait appears in the chat,
-  and the same verse shows under the skull on the stage. (The **Write my
-  calaverita** button still uses the offline template.)
-- **03:** in the first terminal (it uses port 4100, so the runtime can keep
-  running):
+Each step adds one thing the one before it couldn't do. The **Write my
+calaverita** button always uses the offline template, so it works in every step.
+In steps 02 and 03 the agent can write a verse too.
 
-  ```sh
-  cd 03-custom-server/server
-  cp .env.example .env          # set ANTHROPIC_API_KEY
-  npm install
-  npm start                     # http://localhost:4100/api/copilotkit
-  ```
+#### 00 · Foundations (no agent)
 
-  and run the app from `03-custom-server` as above. This server checks every
-  change the agent makes to the form and tells the model what it rejected, so it
-  can fix it and try again. `npm run smoke` runs those checks offline, with no
-  key.
+1. Type a name and a job. The button stays disabled until both are filled.
+2. Pick a tone, then put a hat or glasses on the skull and change its color.
+3. Press **Write my calaverita**.
+
+**You should see:** the skull change as you click, and a four-line verse under
+it. There is no chat and no agent yet.
+
+#### 01 · Shared state (the agent fills the form)
+
+Type in the Copilot panel: *"Mario is a chef, dramatic please"*. You can also
+click a suggestion.
+
+**You should see:** the name, the job and the tone fill in, the skull gets
+dressed, and the **Shared state** box shows the same values. The agent replies
+in a sentence and tells you to press **Write my calaverita**.
+
+Then edit a field by hand and ask *"who is this for?"*. The agent answers with
+your edit, because it reads the same shared state.
+
+**Not yet:** the agent can't write the verse. Press **Write my calaverita** to
+get the template one.
+
+#### 02 · Generative UI (the agent writes the calaverita)
+
+Type: *"Mario is a chef, dramatic please. Write his calaverita!"*
+
+**You should see:** the form fill in and the skull get dressed, then a card
+with the skull portrait and a four-line verse appear in the chat. The same verse
+shows under the skull on the stage.
+
+If the name or the job is missing, the agent asks for it instead.
+
+#### 03 · Custom server (optional)
+
+Start the server in a first terminal. It uses port 4100, so the runtime of steps
+01 and 02 can keep running:
+
+```sh
+cd 03-custom-server/server
+cp .env.example .env          # set ANTHROPIC_API_KEY
+npm install
+npm start                     # http://localhost:4100/api/copilotkit
+```
+
+Then run the app from `03-custom-server` as above and try the same messages as
+in step 02.
+
+**What's different:** this server checks every change the agent makes to the
+form and tells the model what it rejected, so it can fix it and try again. It
+also puts the current form in the prompt on every run. `npm run smoke` runs its
+checks offline, with no key.
 
 ## Point the app at another backend
 

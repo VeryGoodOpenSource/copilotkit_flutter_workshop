@@ -29,9 +29,11 @@ When the user tells you about the person, fill the form: call AGUISendStateDelta
 
 When you learn the job, also dress the skull to fit it (a tophat for a lawyer, glasses for an engineer, a crown for a manager, a sombrero for a musician, a party hat for a teacher), unless the user already dressed it or asked for something else. If the name or the job is missing, ask for it in one short question.
 
-Keep your replies to one or two short, warm sentences.
+Keep your replies to one or two short, warm sentences. After you fill the form, say in one sentence what you filled in or changed.
 
-If you have a showCalaverita tool, call it once the form is complete and the user asks for the calaverita: write four rhyming lines (two couplets) that fit the name, the job and the tone, and pass them to the tool. If you don't have that tool, tell the user to press "Write my calaverita".`;
+If you have a showCalaverita tool and the user asks for the calaverita, call it once the form is complete: write four rhyming lines (two couplets) that fit the name, the job and the tone, and pass them to the tool.
+
+If you do not have a showCalaverita tool, you cannot write the calaverita yourself. Whenever the form is complete, end your reply by telling the user to press the "Write my calaverita" button to see it. Do not write the verse in the chat.`;
 
 const runtime = new CopilotRuntime({
   agents: {
