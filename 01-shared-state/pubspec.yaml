@@ -1,0 +1,32 @@
+name: calaverita_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - apps/calaverita_app
+  - features/assistant/assistant_presentation
+  - features/calaverita/calaverita_domain
+  - features/calaverita/calaverita_data
+  - features/calaverita/calaverita_presentation
+
+# The CopilotKit Flutter SDK is not on pub.dev yet. Its packages depend on
+# each other through a workspace, so pub needs every one of them pinned to
+# the same commit.
+dependency_overrides:
+  copilotkit:
+    git:
+      url: https://github.com/VGVentures/copilotkit_flutter_sdk.git
+      path: packages/copilotkit
+      ref: e52039c1729d57358ddac9c956fd2a2052928bbd
+  copilotkit_flutter:
+    git:
+      url: https://github.com/VGVentures/copilotkit_flutter_sdk.git
+      path: packages/copilotkit_flutter
+      ref: e52039c1729d57358ddac9c956fd2a2052928bbd
+  json_utils:
+    git:
+      url: https://github.com/VGVentures/copilotkit_flutter_sdk.git
+      path: packages/json_utils
+      ref: e52039c1729d57358ddac9c956fd2a2052928bbd
