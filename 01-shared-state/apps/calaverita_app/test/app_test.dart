@@ -1,30 +1,29 @@
 import 'package:calaverita_app/app/app.dart';
+import 'package:calaverita_presentation/calaverita_presentation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows the form next to the chat', (tester) async {
+  Future<void> pumpApp(WidgetTester tester) async {
     tester.view
       ..devicePixelRatio = 1
-      ..physicalSize = const Size(1200, 900);
+      ..physicalSize = const Size(1600, 1000);
     addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(const App());
+    await tester.pumpWidget(const App(skullArt: SkullArt.fromTemplates({})));
     await tester.pump();
+  }
 
+  testWidgets('shows the details, the stage and the copilot', (tester) async {
+    await pumpApp(tester);
+
+    expect(find.text('Details'), findsOneWidget);
+    expect(find.text('Copilot'), findsOneWidget);
     expect(find.byKey(const Key('calaverita_name_field')), findsOneWidget);
-    expect(find.byKey(const Key('chat_input')), findsOneWidget);
-    expect(find.byKey(const Key('shared_state_inspector')), findsOneWidget);
+    expect(find.text('Mario is a chef, dramatic please'), findsOneWidget);
   });
 
-  testWidgets('writes a calaverita from the form', (tester) async {
-    tester.view
-      ..devicePixelRatio = 1
-      ..physicalSize = const Size(1200, 900);
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(const App());
-    await tester.pump();
+  testWidgets('writes a calaverita from the details', (tester) async {
+    await pumpApp(tester);
 
     await tester.enterText(
       find.byKey(const Key('calaverita_name_field')),
@@ -39,6 +38,6 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
 
-    expect(find.text('💀 Calaverita for Ana'), findsOneWidget);
+    expect(find.text('Calaverita for Ana'), findsOneWidget);
   });
 }

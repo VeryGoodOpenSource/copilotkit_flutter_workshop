@@ -1,14 +1,22 @@
+import 'package:app_ui/app_ui.dart';
 import 'package:assistant_presentation/assistant_presentation.dart';
 import 'package:calaverita_app/app/app_config.dart';
-import 'package:calaverita_app/app/theme.dart';
 import 'package:calaverita_data/calaverita_data.dart';
 import 'package:calaverita_presentation/calaverita_presentation.dart';
 import 'package:copilotkit_flutter/copilotkit_flutter.dart';
-import 'package:flutter/material.dart';
 
 /// Composes the calaverita and assistant features into an app.
 class App extends StatelessWidget {
-  const App({super.key});
+  const App({required this.skullArt, super.key});
+
+  /// The SVGs of the skull, loaded at startup.
+  final SkullArt skullArt;
+
+  static const _suggestions = [
+    'Ana is a pilot, make it sarcastic',
+    'Give the skull a sombrero and teal color',
+    'Mario is a chef, dramatic please',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +24,19 @@ class App extends StatelessWidget {
       runtimeUrl: AppConfig.runtimeUrl,
       child: MaterialApp(
         title: 'Calaverita Generator',
-        theme: buildTheme(),
-        home: const CopilotAgentScope(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        // One agent for the whole screen: the details and the stage read
+        // its shared state, and the chat talks to it.
+        home: CopilotAgentScope(
           agentId: AppConfig.agentId,
           child: CalaveritaModule(
-            calaveritasRepository: TemplateCalaveritasRepository(),
-            trailingPanel: ChatModule(agentId: AppConfig.agentId),
+            calaveritasRepository: const TemplateCalaveritasRepository(),
+            skullArt: skullArt,
+            trailingPanel: const ChatModule(
+              agentId: AppConfig.agentId,
+              suggestions: _suggestions,
+            ),
           ),
         ),
       ),

@@ -1,5 +1,5 @@
 name: calaverita_presentation
-description: The calaverita form, result card and the cubit behind them.
+description: The details, the stage and the skull portrait of the calaverita screen.
 version: 0.1.0
 publish_to: none
 resolution: workspace
@@ -9,12 +9,14 @@ environment:
   flutter: ^3.47.0
 
 dependencies:
+  app_ui: any
   calaverita_domain: any
   copilotkit_flutter: any
   equatable: ^3.0.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
+  flutter_svg: ^2.2.4
   provider: ^6.1.5
 
 dev_dependencies:
@@ -23,3 +25,15 @@ dev_dependencies:
     sdk: flutter
   mocktail: ^1.0.5
   very_good_analysis: ^11.0.0
+
+flutter:
+  assets:
+    - assets/skull/base/
+    - assets/skull/pattern/
+    - assets/skull/eyes/
+    - assets/skull/nose/
+    - assets/skull/mouth/
+    - assets/skull/mustache/
+    - assets/skull/glasses/
+    - assets/skull/flowers/
+    - assets/skull/hat/

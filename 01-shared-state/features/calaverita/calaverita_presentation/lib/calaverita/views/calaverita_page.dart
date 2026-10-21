@@ -1,84 +1,208 @@
+import 'package:app_ui/app_ui.dart';
 import 'package:calaverita_presentation/calaverita/bloc/calaverita_cubit.dart';
 import 'package:calaverita_presentation/calaverita/bloc/calaverita_state.dart';
-import 'package:calaverita_presentation/calaverita/views/calaverita_card.dart';
-import 'package:calaverita_presentation/calaverita/views/calaverita_form.dart';
-import 'package:calaverita_presentation/calaverita/views/shared_state_inspector.dart';
-import 'package:flutter/material.dart';
+import 'package:calaverita_presentation/calaverita/shared_draft/draft_edits.dart';
+import 'package:calaverita_presentation/calaverita/shared_draft/shared_draft.dart';
+import 'package:calaverita_presentation/calaverita/views/details_panel.dart';
+import 'package:calaverita_presentation/calaverita/views/stage.dart';
+import 'package:copilotkit_flutter/copilotkit_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The form and the finished calaverita, with [trailingPanel] beside them.
-class CalaveritaPage extends StatelessWidget {
+/// Width at or above which the columns are side by side.
+const _desktopBreakpoint = 1000.0;
+
+/// The one screen: the details on the left and the stage in the middle,
+/// with [trailingPanel] on the right.
+///
+/// The details and the stage read the form from the agent's shared state, so
+/// the page needs a `CopilotAgentScope` above it.
+class CalaveritaPage extends StatefulWidget {
   const CalaveritaPage({this.trailingPanel, super.key});
 
-  /// A panel shown beside the form, or below it on a narrow screen.
+  /// A panel the app puts beside the stage, or below it on a narrow screen.
   final Widget? trailingPanel;
 
-  /// Width from which the panel sits beside the form.
-  static const _wideBreakpoint = 900.0;
+  @override
+  State<CalaveritaPage> createState() => _CalaveritaPageState();
+}
+
+class _CalaveritaPageState extends State<CalaveritaPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Waits a frame: sharing state while the tree builds would rebuild
+    // widgets that are still building.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) DraftEdits.of(context).ensureInitialized();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final panel = trailingPanel;
     return Scaffold(
-      appBar: AppBar(title: const Text('💀 Calaverita Generator')),
+      backgroundColor: context.palette.ground,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (panel == null) return const _FormColumn();
-            if (constraints.maxWidth >= _wideBreakpoint) {
-              return Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1680),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.x4l,
+                AppSpacing.x3l,
+                AppSpacing.x4l,
+                AppSpacing.x4l,
+              ),
+              child: Column(
                 children: [
-                  const Expanded(child: _FormColumn()),
-                  const VerticalDivider(width: 1),
-                  SizedBox(width: 420, child: panel),
+                  const _Header(),
+                  const SizedBox(height: AppSpacing.x3l),
+                  Expanded(child: _Layout(trailingPanel: widget.trailingPanel)),
                 ],
-              );
-            }
-            return Column(
-              children: [
-                const Expanded(child: _FormColumn()),
-                const Divider(height: 1),
-                SizedBox(height: 320, child: panel),
-              ],
-            );
-          },
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _FormColumn extends StatelessWidget {
-  const _FormColumn();
+class _Header extends StatelessWidget {
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const CalaveritaForm(),
-            const SizedBox(height: 16),
-            const SharedStateInspector(),
-            const SizedBox(height: 24),
-            BlocBuilder<CalaveritaCubit, CalaveritaState>(
-              builder: (context, state) {
-                if (state.status == GenerationStatus.failure) {
-                  return Text(
-                    'The skull lost its voice. Try again.',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                }
-                final calaverita = state.calaverita;
-                if (calaverita == null) return const SizedBox.shrink();
-                return CalaveritaCard(calaverita: calaverita);
-              },
+    final p = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [p.navy, p.navyAlt]),
+        borderRadius: AppRadii.cardBorder,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.x5l,
+          vertical: AppSpacing.xl,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Calaverita Generator',
+                style: AppTypography.title.copyWith(color: p.onNavy),
+              ),
+              Text(
+                'A funny rhyming skull for someone you love.',
+                style: AppTypography.small.copyWith(color: p.onNavyMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Layout extends StatelessWidget {
+  const _Layout({this.trailingPanel});
+
+  final Widget? trailingPanel;
+
+  @override
+  Widget build(BuildContext context) {
+    final panel = trailingPanel;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _desktopBreakpoint) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacing.x3l,
+            children: [
+              const SizedBox(width: 380, child: _Details()),
+              const Expanded(child: _Stage()),
+              if (panel != null) SizedBox(width: 420, child: panel),
+            ],
+          );
+        }
+        return SingleChildScrollView(
+          child: Column(
+            spacing: AppSpacing.x3l,
+            children: [
+              const SizedBox(height: 640, child: _Stage()),
+              if (panel != null) SizedBox(height: 520, child: panel),
+              const SizedBox(height: 760, child: _Details()),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Details extends StatelessWidget {
+  const _Details();
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<CalaveritaCubit>();
+    final edits = DraftEdits.of(context);
+    return SharedDraft(
+      builder: (context, draft) =>
+          BlocBuilder<CalaveritaCubit, CalaveritaState>(
+            builder: (context, state) {
+              final isGenerating = state.status == GenerationStatus.generating;
+              return DetailsPanel(
+                draft: draft,
+                canGenerate: draft.isComplete && !isGenerating,
+                isGenerating: isGenerating,
+                onNameChanged: edits.nameChanged,
+                onJobChanged: edits.jobChanged,
+                onToneChanged: edits.toneChanged,
+                onSkullPartChanged: edits.skullPartChanged,
+                onSkullColorChanged: edits.skullColorChanged,
+                onGenerate: () => cubit.generate(draft),
+              );
+            },
+          ),
+    );
+  }
+}
+
+class _Stage extends StatelessWidget {
+  const _Stage();
+
+  @override
+  Widget build(BuildContext context) {
+    return SharedDraft(
+      builder: (context, draft) =>
+          BlocBuilder<CalaveritaCubit, CalaveritaState>(
+            builder: (context, state) => Stage(
+              skull: draft.skull,
+              status: state.status,
+              calaverita: state.calaverita,
+              badge: const _AgentBadge(),
             ),
-          ],
+          ),
+    );
+  }
+}
+
+/// "Copilot is working…" while the agent handles a request.
+class _AgentBadge extends StatelessWidget {
+  const _AgentBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return AgentStateBuilder<bool>(
+      selector: (state) => state.isRunning,
+      builder: (context, busy) => AnimatedOpacity(
+        duration: AppMotion.quick,
+        opacity: busy ? 1 : 0,
+        child: const AppChip(
+          label: 'Copilot is working…',
+          icon: AppIcons.sparkle,
+          tone: AppTone.accent,
         ),
       ),
     );

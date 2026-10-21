@@ -10,6 +10,7 @@ workspace:
   - features/calaverita/calaverita_domain
   - features/calaverita/calaverita_data
   - features/calaverita/calaverita_presentation
+  - shared/app_ui
 
 # The CopilotKit Flutter SDK is not on pub.dev yet. Its packages depend on
 # each other through a workspace, so pub needs every one of them pinned to

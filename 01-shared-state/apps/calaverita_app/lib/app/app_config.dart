@@ -1,11 +1,11 @@
 /// The one place that says where the agent lives.
 ///
-/// To use the shared hosted backend, change [defaultRuntimeUrl] (or build
-/// with `--dart-define=RUNTIME_URL=<url>`).
+/// To use the shared hosted backend, change [defaultRuntimeUrl] (or run with
+/// `--dart-define=RUNTIME_URL=<url>`).
 class AppConfig {
   const AppConfig._();
 
-  /// The Copilot Runtime of the local `runtime/` folder.
+  /// The Copilot Runtime of the `runtime/` folder of this repository.
   static const defaultRuntimeUrl = 'http://localhost:8200/api/copilotkit';
 
   /// The Copilot Runtime the app talks to.

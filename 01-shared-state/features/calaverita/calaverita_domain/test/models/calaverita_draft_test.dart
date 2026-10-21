@@ -18,6 +18,7 @@ void main() {
         name: 'Ana',
         job: 'Designer',
         tone: Tone.sarcastic,
+        skull: SkullStyle(color: '#12a5a0', hat: 'sombrero', flowers: 'trio'),
       );
       expect(CalaveritaDraft.fromJson(draft.toJson()), draft);
     });
@@ -27,8 +28,15 @@ void main() {
         'name': 42,
         'job': 'Chef',
         'tone': 'grumpy',
+        'skull': {'hat': 'helmet', 'color': 'red', 'glasses': 'heart'},
       });
-      expect(draft, const CalaveritaDraft(job: 'Chef'));
+      expect(
+        draft,
+        const CalaveritaDraft(
+          job: 'Chef',
+          skull: SkullStyle(glasses: 'heart'),
+        ),
+      );
     });
 
     test('copyWith keeps what it is not given', () {
