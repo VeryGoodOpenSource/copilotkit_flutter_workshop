@@ -1,0 +1,19 @@
+# FVM
+.fvm/
+
+# Dart / Flutter
+.dart_tool/
+build/
+.flutter-plugins-dependencies
+pubspec_overrides.yaml
+
+# Secrets: never commit a model key
+.env
+
+# Runtime
+node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store

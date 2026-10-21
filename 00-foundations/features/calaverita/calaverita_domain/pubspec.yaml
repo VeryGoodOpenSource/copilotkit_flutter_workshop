@@ -1,0 +1,15 @@
+name: calaverita_domain
+description: Models and repository contract of the calaverita feature.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  equatable: ^3.0.0
+
+dev_dependencies:
+  test: ^1.26.0
+  very_good_analysis: ^11.0.0
