@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<ellipse cx="200" cy="80" rx="186" ry="30" fill="{{fill}}" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"/><path d="M130 78 C128 24 160 8 200 8 C240 8 272 24 270 78Z" fill="{{fill}}" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"/><path d="M131 62 L269 62 L270 78 Q200 92 130 78Z" fill="{{accent}}" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

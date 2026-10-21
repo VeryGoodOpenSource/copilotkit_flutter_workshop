@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<path d="M200 308 C165 296 128 310 126 338 C150 328 175 332 200 328 C225 332 250 328 274 338 C272 310 235 296 200 308Z" fill="{{fill}}" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

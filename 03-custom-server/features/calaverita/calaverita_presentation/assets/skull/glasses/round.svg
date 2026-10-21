@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<g fill="{{fill}}" fill-opacity=".42" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"><circle cx="150" cy="215" r="46"/><circle cx="250" cy="215" r="46"/></g><g fill="none" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"><path d="M196 208 Q200 200 204 208"/><path d="M104 212 L72 204 M296 212 L328 204"/></g>
+</svg>

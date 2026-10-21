@@ -1,0 +1,21 @@
+name: assistant_presentation
+description: The chat with the agent, a presentation-only feature.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: ^3.47.0
+
+dependencies:
+  app_ui: any
+  copilotkit_flutter: any
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^11.0.0
