@@ -40,6 +40,9 @@ const runtime = new CopilotRuntime({
     default: new BuiltInAgent({
       model,
       prompt,
+      // Without this the run ends right after a tool call. The agent has to
+      // get one more step to tell the user what it did.
+      maxSteps: 5,
     }),
   },
 });
