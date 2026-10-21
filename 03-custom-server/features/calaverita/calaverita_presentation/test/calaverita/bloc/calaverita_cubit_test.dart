@@ -41,6 +41,18 @@ void main() {
     );
 
     blocTest<CalaveritaCubit, CalaveritaState>(
+      'shows a calaverita the agent wrote',
+      build: build,
+      act: (cubit) => cubit.calaveritaShown(calaverita),
+      expect: () => const [
+        CalaveritaState(
+          status: GenerationStatus.success,
+          calaverita: calaverita,
+        ),
+      ],
+    );
+
+    blocTest<CalaveritaCubit, CalaveritaState>(
       'does nothing while the draft is incomplete',
       build: build,
       act: (cubit) => cubit.generate(const CalaveritaDraft(name: 'Ana')),

@@ -20,7 +20,7 @@ before it, so compare two folders to see exactly what changed.
 | --- | --- | --- |
 | [`00-foundations`](00-foundations) | The app with local state and no agent. You fill the form, dress the skull and press a button. | The architecture: a domain, a data and a presentation package per feature. |
 | [`01-shared-state`](01-shared-state) | A copilot panel appears. You tell it about your friend and it fills the form and dresses the skull. | **Shared state**: `AgentStateBuilder`, `patchSharedState` and `setSharedState`. |
-| [`02-generative-ui`](02-generative-ui) | You ask for the calaverita and the agent shows it as a card in the chat, skull included. | **Generative UI**: a frontend tool registered with `CopilotTool` whose builder renders a widget. |
+| [`02-generative-ui`](02-generative-ui) | You ask for the calaverita and the agent writes it: a card with the skull appears in the chat and the verse shows under the skull on the stage. | **Generative UI**: a frontend tool registered with `CopilotTool` whose builder renders a widget. |
 | [`03-custom-server`](03-custom-server) | The same app, talking to a small server of its own instead of the built-in agent. *Optional.* | **Server logic**: validating what the agent changes and shaping its prompt. |
 
 ## Set up
@@ -85,7 +85,9 @@ fvm flutter run -d chrome
   *"who is this for?"*: the agent sees your edit. The **Shared state** is the
   one thing the form, the skull and the agent all read and write.
 - **02:** write *"Mario is a chef, dramatic please. Write his calaverita!"*. The
-  agent writes four lines and a card with the skull portrait appears in the chat.
+  agent writes four lines: a card with the skull portrait appears in the chat,
+  and the same verse shows under the skull on the stage. (The **Write my
+  calaverita** button still uses the offline template.)
 - **03:** in the first terminal (it uses port 4100, so the runtime can keep
   running):
 

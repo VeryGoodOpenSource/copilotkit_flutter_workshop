@@ -9,9 +9,14 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const args = ShowCalaveritaArgs(lines: ['one', 'two', 'three', 'four']);
 
+  final written = <Calaverita>[];
+  setUp(written.clear);
+
   Future<String> run(CalaveritaDraft draft, ShowCalaveritaArgs args) =>
-      ShowCalaveritaHandler(readDraft: () => draft)
-          .handle(args, signal: CancellationSignal());
+      ShowCalaveritaHandler(
+        readDraft: () => draft,
+        onWritten: written.add,
+      ).handle(args, signal: CancellationSignal());
 
   group(ShowCalaveritaHandler, () {
     test('puts the verse together with the form and the skull', () async {
@@ -37,10 +42,37 @@ void main() {
       );
     });
 
+    test('hands the calaverita to the stage', () async {
+      await run(const CalaveritaDraft(name: 'Ana', job: 'Pilot'), args);
+
+      expect(written, [
+        const Calaverita(
+          name: 'Ana',
+          job: 'pilot',
+          tone: Tone.playful,
+          lines: ['one', 'two', 'three', 'four'],
+        ),
+      ]);
+    });
+
+    test('hands the calaverita to the stage', () async {
+      await run(const CalaveritaDraft(name: 'Ana', job: 'Pilot'), args);
+
+      expect(written, [
+        const Calaverita(
+          name: 'Ana',
+          job: 'pilot',
+          tone: Tone.playful,
+          lines: ['one', 'two', 'three', 'four'],
+        ),
+      ]);
+    });
+
     test('says so when the form is incomplete', () async {
       final result = await run(const CalaveritaDraft(name: 'Ana'), args);
 
       expect(result, contains('name and a job'));
+      expect(written, isEmpty);
     });
 
     test('says so when there is no verse', () async {
@@ -50,6 +82,7 @@ void main() {
       );
 
       expect(result, contains('no verse'));
+      expect(written, isEmpty);
     });
   });
 

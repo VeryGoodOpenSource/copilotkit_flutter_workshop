@@ -4,10 +4,14 @@ import 'package:calaverita_domain/calaverita_domain.dart';
 import 'package:calaverita_presentation/calaverita_presentation.dart';
 import 'package:copilotkit_flutter/copilotkit_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:provider/provider.dart';
 
 import '../../helpers/test_skull_art.dart';
+
+class _MockRepository extends Mock implements ICalaveritasRepository;
 
 void main() {
   const calaverita = Calaverita(
@@ -29,8 +33,12 @@ void main() {
             value: TestSkullArt.build(),
             child: CopilotAgentScope(
               agentId: 'default',
-              child: Scaffold(
-                body: ShowCalaveritaTool(child: ToolCallWidget(call: call)),
+              child: BlocProvider(
+                create: (_) =>
+                    CalaveritaCubit(calaveritasRepository: _MockRepository()),
+                child: Scaffold(
+                  body: ShowCalaveritaTool(child: ToolCallWidget(call: call)),
+                ),
               ),
             ),
           ),

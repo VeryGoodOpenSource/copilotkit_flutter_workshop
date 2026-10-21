@@ -13,6 +13,11 @@ class CalaveritaCubit extends Cubit<CalaveritaState> {
 
   final ICalaveritasRepository _calaveritasRepository;
 
+  /// Shows [calaverita], one the agent wrote, on the stage.
+  void calaveritaShown(Calaverita calaverita) => emit(
+    state.copyWith(status: GenerationStatus.success, calaverita: calaverita),
+  );
+
   /// Writes a calaverita for [draft], if it is complete.
   Future<void> generate(CalaveritaDraft draft) async {
     if (!draft.isComplete || state.status == GenerationStatus.generating) {

@@ -1,17 +1,21 @@
 import 'package:ack/ack.dart';
+import 'package:calaverita_presentation/calaverita/bloc/calaverita_cubit.dart';
 import 'package:calaverita_presentation/calaverita/shared_draft/shared_draft.dart';
 import 'package:calaverita_presentation/calaverita/show_calaverita/show_calaverita_args.dart';
 import 'package:calaverita_presentation/calaverita/show_calaverita/show_calaverita_card.dart';
 import 'package:calaverita_presentation/calaverita/show_calaverita/show_calaverita_handler.dart';
 import 'package:copilotkit_flutter/copilotkit_flutter.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Gives the agent a `showCalaverita` tool and draws its calls as a
 /// [ShowCalaveritaCard] in [child], e.g. the chat.
 ///
 /// The agent writes the verse and calls the tool, the tool adds the form and
-/// the skull as they are right now, and the card shows the result. Needs a
-/// `CopilotAgentScope` above it.
+/// the skull as they are right now, and the card in the chat shows the
+/// result. The stage shows it too, so the verse the agent wrote is the one on
+/// the main screen. Needs a `CopilotAgentScope` and the calaverita screen's
+/// cubit above it.
 class ShowCalaveritaTool extends StatefulWidget {
   const ShowCalaveritaTool({required this.child, super.key});
 
@@ -31,6 +35,7 @@ class _ShowCalaveritaToolState extends State<ShowCalaveritaTool> {
     super.didChangeDependencies();
     if (_tool != null) return;
     final agent = CopilotAgentScope.of(context);
+    final cubit = context.read<CalaveritaCubit>();
     _tool = FrontendTool<ShowCalaveritaArgs>(
       name: 'showCalaverita',
       description:
@@ -45,6 +50,7 @@ class _ShowCalaveritaToolState extends State<ShowCalaveritaTool> {
       decode: ShowCalaveritaArgs.fromJson,
       handler: ShowCalaveritaHandler(
         readDraft: () => SharedDraft.draftOf(agent.state),
+        onWritten: cubit.calaveritaShown,
       ).handle,
     );
   }
