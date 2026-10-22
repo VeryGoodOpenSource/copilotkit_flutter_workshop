@@ -14,6 +14,10 @@ abstract final class AppAssets {
 
   /// Very Good Ventures lockup (black wordmark).
   static const String vgvLockup = 'assets/images/vgv-lockup.svg';
+
+  /// The CopilotKit logo, dark on a transparent-free white background: show it
+  /// on a light surface.
+  static const String copilotKitLogo = 'assets/images/copilotkit-logo.png';
 }
 
 /// The VGV unicorn.
@@ -69,6 +73,26 @@ class AppVgvLockup extends StatelessWidget {
       colorFilter: color == null
           ? null
           : ColorFilter.mode(color!, BlendMode.srcIn),
+    );
+  }
+}
+
+/// The CopilotKit logo: a dark wordmark on white, so it belongs on a light
+/// surface, like a pill on the navy banner.
+class AppCopilotKitLogo extends StatelessWidget {
+  /// Creates the logo [height] logical pixels tall.
+  const AppCopilotKitLogo({required this.height, super.key});
+
+  /// Height of the logo.
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      AppAssets.copilotKitLogo,
+      package: AppAssets.package,
+      height: height,
+      semanticLabel: 'CopilotKit',
     );
   }
 }

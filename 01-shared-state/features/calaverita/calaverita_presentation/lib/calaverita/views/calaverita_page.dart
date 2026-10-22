@@ -101,7 +101,7 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
-            AppVgvLockup(height: 28, color: p.onNavy),
+            const _Logos(),
           ],
         ),
       ),
@@ -210,6 +210,43 @@ class _AgentBadge extends StatelessWidget {
           tone: AppTone.accent,
         ),
       ),
+    );
+  }
+}
+
+/// The CopilotKit and VGV logos on the right of the banner. They make way for
+/// the title on a narrow screen.
+class _Logos extends StatelessWidget {
+  const _Logos();
+
+  /// Width of the screen from which the logos are shown.
+  static const _minWidth = 640.0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width < _minWidth) {
+      return const SizedBox.shrink();
+    }
+    final p = context.palette;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: AppSpacing.x4l,
+      children: [
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: AppRadii.pillBorder,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl,
+              vertical: AppSpacing.md,
+            ),
+            child: AppCopilotKitLogo(height: 26),
+          ),
+        ),
+        AppVgvLockup(height: 28, color: p.onNavy),
+      ],
     );
   }
 }
