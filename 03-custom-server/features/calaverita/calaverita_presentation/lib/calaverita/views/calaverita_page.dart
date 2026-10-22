@@ -83,21 +83,26 @@ class _Header extends StatelessWidget {
           horizontal: AppSpacing.x5l,
           vertical: AppSpacing.xl,
         ),
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Calaverita Generator',
-                style: AppTypography.title.copyWith(color: p.onNavy),
+        child: Row(
+          spacing: AppSpacing.x5l,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Calaverita Generator',
+                    style: AppTypography.title.copyWith(color: p.onNavy),
+                  ),
+                  Text(
+                    'A funny rhyming skull for someone you love.',
+                    style: AppTypography.small.copyWith(color: p.onNavyMuted),
+                  ),
+                ],
               ),
-              Text(
-                'A funny rhyming skull for someone you love.',
-                style: AppTypography.small.copyWith(color: p.onNavyMuted),
-              ),
-            ],
-          ),
+            ),
+            AppVgvLockup(height: 28, color: p.onNavy),
+          ],
         ),
       ),
     );
