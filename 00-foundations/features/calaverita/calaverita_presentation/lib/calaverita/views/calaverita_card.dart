@@ -21,7 +21,10 @@ class CalaveritaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     return AppCard(
-      color: p.accentWash,
+      // The wash is see-through, so on its own it takes the color of what is
+      // behind it: bluish on the stage, navy in the chat. Lay it on the
+      // surface to get the same card anywhere.
+      color: Color.alphaBlend(p.accentWash, p.surface),
       padding: const EdgeInsets.all(AppSpacing.x4l),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

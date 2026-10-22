@@ -41,6 +41,26 @@ void main() {
       }
     });
 
+    testWidgets('has the same opaque background on any surface', (
+      tester,
+    ) async {
+      await pumpCard(tester, showPortrait: false);
+
+      final decoration =
+          tester
+                  .widget<DecoratedBox>(
+                    find
+                        .descendant(
+                          of: find.byType(CalaveritaCard),
+                          matching: find.byType(DecoratedBox),
+                        )
+                        .first,
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect(decoration.color!.a, 1);
+    });
+
     testWidgets('shows the portrait unless asked not to', (tester) async {
       await pumpCard(tester, showPortrait: true);
       expect(find.byType(SkullView), findsOneWidget);
