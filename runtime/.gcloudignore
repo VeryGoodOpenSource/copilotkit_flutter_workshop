@@ -1,0 +1,8 @@
+# What `gcloud run deploy --source runtime` uploads. The key lives on the host,
+# never in the upload, and the image installs its own node_modules.
+*
+!Dockerfile
+!package.json
+!package-lock.json
+!server.ts
+!env.ts
