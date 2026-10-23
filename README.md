@@ -37,10 +37,22 @@ You need:
 fvm install
 ```
 
+Then check that everything is in place. It runs the same on Windows, macOS and
+Linux, and it never prints your key:
+
+```sh
+node tool/doctor.mjs
+```
+
+> [!NOTE]
+> **Windows:** turn on *Developer Mode* (Settings → System → For developers)
+> before `fvm install`, because FVM uses symlinks. The commands below work in
+> PowerShell and in a macOS or Linux terminal. Where they differ, both are shown.
+
 > [!NOTE]
 > The CopilotKit Flutter SDK is not on pub.dev yet, so each snapshot gets it from
 > GitHub, pinned to one commit (see `dependency_overrides` in the `pubspec.yaml`
-> at the root of each snapshot). Your first `pub get` needs access to
+> at the root of each snapshot). Your first `pub get` needs to reach
 > [`VGVentures/copilotkit_flutter_sdk`](https://github.com/VGVentures/copilotkit_flutter_sdk).
 
 ## Run a step
@@ -52,13 +64,24 @@ its own.
 **1. Start the runtime** (steps 01 and 02) in a first terminal:
 
 ```sh
-cp runtime/.env.example runtime/.env
-# open runtime/.env and set ANTHROPIC_API_KEY=<your key>
-./runtime/start.sh
+cd runtime
+npm install
 ```
 
-It prints `http://localhost:8200/api/copilotkit`. Check it with
-`curl http://localhost:8200/api/copilotkit/info`.
+Create your `runtime/.env` from the example, then open it and set
+`ANTHROPIC_API_KEY=<your key>`:
+
+```sh
+cp .env.example .env             # macOS and Linux
+Copy-Item .env.example .env      # Windows PowerShell
+```
+
+```sh
+npm start
+```
+
+It prints `http://localhost:8200/api/copilotkit`. Check it from another terminal
+with `node tool/doctor.mjs`.
 
 > [!IMPORTANT]
 > The key lives only in `runtime/.env` (git-ignored) or in your shell. Never

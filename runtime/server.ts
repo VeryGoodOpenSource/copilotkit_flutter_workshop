@@ -1,5 +1,6 @@
 // Copilot Runtime for the Calaverita Generator workshop, based on the
-// CopilotKit Flutter SDK's example runtime. Start it with ./start.sh.
+// CopilotKit Flutter SDK's example runtime. Start it with `npm start`.
+import "./env.js";
 import { createServer } from "node:http";
 import { networkInterfaces } from "node:os";
 import { BuiltInAgent, CopilotRuntime } from "@copilotkit/runtime/v2";

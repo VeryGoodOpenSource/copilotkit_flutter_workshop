@@ -1,7 +1,7 @@
 {
-  "name": "copilotkit-flutter-example-runtime",
+  "name": "calaverita-runtime",
   "private": true,
-  "description": "Local Copilot Runtime for the CopilotKit Flutter SDK example app.",
+  "description": "Copilot Runtime for the Calaverita Generator workshop (steps 01 and 02).",
   "type": "module",
   "scripts": {
     "start": "tsx server.ts"
@@ -17,5 +17,8 @@
   "allowScripts": {
     "@scarf/scarf": false,
     "esbuild": false
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
