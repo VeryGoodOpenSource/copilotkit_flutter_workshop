@@ -14,6 +14,7 @@
 //   --backend <shared|local|custom>  which backend to use (step 03 always runs its own server)
 //   --url <url>                      the runtime URL, for a custom backend
 //   --agent <id>                     the agent id, when the backend has more than one
+//   --code <code>                    the workshop password of the shared backend (or set WORKSHOP_CODE)
 //   --no-run                         set everything up, then print the commands instead of running them
 //   --no-app                         start the backend and keep it running, without the app
 //   --yes                            never ask, use the defaults and the options given
@@ -166,13 +167,15 @@ const stepDir = `${root}${step.dir}`;
 
 /** The backend the app talks to: its URL and agent id, and the folder to start if it is ours. */
 let backend = null;
+/** The password of the shared backend. The app sends it as a header; a runtime on your machine asks for none. */
+let workshopCode = "";
 
 /** Makes sure `dir` has the model key in its .env, asking for it when it is missing. */
 async function ensureKey(dir) {
   const envPath = `${dir}/.env`;
   const env = readEnvFile(envPath);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
-  const variable = { openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
+  const variable = { openai: "OPENAI_API_KEY", anthropic: "CLAUDE_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
   if (!variable) return;
   if (process.env[variable] || env[variable]) {
     say(`${paint("32", "✓")} ${variable} is set (the value is not shown).`);
@@ -231,6 +234,7 @@ if (stepKey !== "00" && step.server) {
   if (kind === "shared") {
     if (!config.sharedBackendUrl) fail("The shared backend is not configured yet.", "Use --backend local, or --backend custom --url <url>.");
     await useExternal(config.sharedBackendUrl, config.sharedAgentId ?? "default");
+    workshopCode = option("code") ?? process.env.WORKSHOP_CODE ?? (await askSecret("Workshop password (nothing is shown as you type, empty if there is none):")) ?? "";
   } else if (kind === "custom") {
     say("\nTo make a backend with CopilotKit's tool, run this in another terminal and follow its steps:");
     hint("npx copilotkit with-claude my-backend");
@@ -249,8 +253,10 @@ heading(`${stepKey === "00" ? "2" : "3"}. Getting the app ready`);
 if (!runVisible("fvm", ["flutter", "pub", "get"], stepDir)) fail("`flutter pub get` failed.", "If it can't fetch the CopilotKit SDK, check that you can reach github.com.");
 
 const appDir = `${stepDir}/apps/calaverita_app`;
-const appArgs = ["flutter", "run", "-d", "chrome", ...(backend ? [`--dart-define=RUNTIME_URL=${backend.url}`, `--dart-define=AGENT_ID=${backend.agent}`] : [])];
+const appArgs = ["flutter", "run", "-d", "chrome", ...(backend ? [`--dart-define=RUNTIME_URL=${backend.url}`, `--dart-define=AGENT_ID=${backend.agent}`, ...(workshopCode ? [`--dart-define=WORKSHOP_CODE=${workshopCode}`] : [])] : [])];
 const appCommand = `fvm ${appArgs.join(" ")}`;
+/** The same command for the screen: the password is never printed. */
+const shownCommand = workshopCode ? appCommand.replace(workshopCode, "<workshop password>") : appCommand;
 
 /** Starts the backend of ours in the background and waits until it answers. Returns a function that stops it. */
 async function startBackend() {
@@ -289,7 +295,7 @@ async function startBackend() {
 if (flag("no-run")) {
   heading("Ready. To run it yourself:");
   if (backend?.folder) say(`  1. In one terminal:   cd ${backend.folder.replace(root, "")} && npm start`);
-  say(`  ${backend?.folder ? "2. In another:" : "Run:"}        cd ${appDir.replace(root, "")} && ${appCommand}`);
+  say(`  ${backend?.folder ? "2. In another:" : "Run:"}        cd ${appDir.replace(root, "")} && ${shownCommand}`);
   process.exit(0);
 }
 

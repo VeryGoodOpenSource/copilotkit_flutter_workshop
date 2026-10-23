@@ -1,0 +1,6 @@
+# The key lives on the host, never in an image.
+.env
+node_modules
+deploy
+Dockerfile
+.dockerignore

@@ -4,7 +4,8 @@
   "description": "Copilot Runtime for the Calaverita Generator workshop (steps 01 and 02).",
   "type": "module",
   "scripts": {
-    "start": "tsx server.ts"
+    "start": "tsx server.ts",
+    "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck --types node server.ts"
   },
   "dependencies": {
     "@copilotkit/runtime": "^1.79.0"

@@ -17,7 +17,7 @@ if (existsSync(envFile)) {
 /** The environment variable that holds the key of each model provider. `null` needs no key. */
 const keyVariables: Record<string, string | null> = {
   openai: "OPENAI_API_KEY",
-  anthropic: "ANTHROPIC_API_KEY",
+  anthropic: "CLAUDE_API_KEY",
   google: "GOOGLE_API_KEY",
   gemini: "GOOGLE_API_KEY",
   "google-gemini": "GOOGLE_API_KEY",
@@ -40,3 +40,5 @@ if (keyVariable && !process.env[keyVariable]) {
   console.error("If runtime/.env does not exist yet, copy runtime/.env.example to runtime/.env first.");
   process.exit(1);
 }
+// The Anthropic SDK underneath reads ANTHROPIC_API_KEY, so hand it the key.
+if (provider === "anthropic") process.env.ANTHROPIC_API_KEY = process.env.CLAUDE_API_KEY;

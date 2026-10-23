@@ -1,0 +1,89 @@
+# Deploys the shared backend (runtime/) to Cloud Run on every change to it on main.
+# One-time setup of Google Cloud: runtime/deploy/setup_gcp.sh, which also lists the
+# GitHub secrets this workflow needs.
+name: deploy_runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/**"
+      - ".github/workflows/deploy_runtime.yaml"
+  workflow_dispatch:
+
+# Two deploys at once would race on the same service.
+concurrency:
+  group: deploy_runtime
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # lets the job sign in to Google Cloud without a key file
+
+env:
+  PROJECT_ID: gen-lang-client-0563181971
+  REGION: us-central1
+  SERVICE: calaverita-runtime
+  REGISTRY_REPOSITORY: calaverita
+  RUNTIME_SERVICE_ACCOUNT: calaverita-runtime@gen-lang-client-0563181971.iam.gserviceaccount.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Sign in to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Build and push the image
+        id: image
+        env:
+          IMAGE: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REGISTRY_REPOSITORY }}/runtime:${{ github.sha }}
+        run: |
+          docker build --tag "$IMAGE" runtime
+          docker push "$IMAGE"
+          echo "name=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      # The key and the password are repository secrets. GitHub masks them in the
+      # logs; Cloud Run keeps them as environment variables of the revision.
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          region: ${{ env.REGION }}
+          service: ${{ env.SERVICE }}
+          image: ${{ steps.image.outputs.name }}
+          env_vars: |
+            CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
+            WORKSHOP_CODE=${{ secrets.WORKSHOP_CODE }}
+          flags: >-
+            --service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }}
+            --allow-unauthenticated
+            --max-instances=1
+            --memory=512Mi
+            --timeout=900
+
+      # The password gate is the point of this deployment, so check it is on.
+      - name: Smoke test
+        env:
+          BASE: ${{ steps.deploy.outputs.url }}/api/copilotkit
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --retry-all-errors "$BASE/info" | jq -e '.agents.default'
+          status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST "$BASE/agent/default/run" --data '{}')
+          test "$status" = 401 || { echo "Expected 401 without the workshop code, got $status"; exit 1; }
+          echo "Deployed: $BASE"

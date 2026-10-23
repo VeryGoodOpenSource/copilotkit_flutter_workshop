@@ -35,7 +35,10 @@ node tool/setup.mjs
 It installs Flutter 3.47.0 through FVM, checks your machine, asks which step to
 run and which backend to use, and starts the app in Chrome. The backend is one of:
 
-- **The shared backend:** nothing to set up.
+- **The shared backend:** the one we host for the workshop, at
+  `https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`.
+  Nothing to set up except the workshop password, which you get at the workshop.
+  It asks for it (hidden as you type), or pass `--code <password>`.
 - **Your own runtime:** it asks for your Anthropic API key (hidden as you type)
   and starts the runtime in `runtime/` for you.
 - **A custom backend:** any CopilotKit runtime you have a URL for, for example one
@@ -90,7 +93,7 @@ npm install
 ```
 
 Create your `runtime/.env` from the example, then open it and set
-`ANTHROPIC_API_KEY=<your key>`:
+`CLAUDE_API_KEY=<your key>`:
 
 ```sh
 cp .env.example .env             # macOS and Linux
@@ -167,7 +170,7 @@ Start the server in a first terminal. It uses port 4100, so the runtime of steps
 
 ```sh
 cd 03-custom-server/server
-cp .env.example .env          # set ANTHROPIC_API_KEY
+cp .env.example .env          # set CLAUDE_API_KEY
 npm install
 npm start                     # http://localhost:4100/api/copilotkit
 ```
@@ -186,6 +189,21 @@ The runtime URL is set in **one place per snapshot**:
 `apps/calaverita_app/lib/app/app_config.dart`. To use a hosted backend, change
 `AppConfig.defaultRuntimeUrl`, or run with
 `--dart-define=RUNTIME_URL=<url>`.
+
+The shared backend (`https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`)
+also asks for a password. The app sends it, and a random id
+of the run, as the `X-Workshop-Code` and `X-Workshop-Session` headers on every
+request:
+
+```sh
+fvm flutter run -d chrome \
+  --dart-define=RUNTIME_URL=<url> --dart-define=WORKSHOP_CODE=<password>
+```
+
+A runtime on your machine ignores both headers, so leave `WORKSHOP_CODE` out
+there. To host the shared backend, deploy `runtime/` and set `WORKSHOP_CODE` and
+`CLAUDE_API_KEY` on the host. The runtime then answers `401` without the
+password. `GET /info` and the CORS preflight stay open.
 
 ## How the code is organized
 
@@ -225,6 +243,8 @@ packages.
 - **The runtime starts but every message fails**: the model or the key is wrong.
   Send a run straight to the runtime and read the `RUN_ERROR` event (see the
   [SDK example README](https://github.com/VGVentures/copilotkit_flutter_sdk/blob/main/example/README.md#troubleshooting)).
+- **"The copilot could not answer" on the shared backend**: the password is
+  missing or wrong (`401`).
 - **`pub get` can't fetch the SDK**: you need access to the SDK repository.
 
 ## License
