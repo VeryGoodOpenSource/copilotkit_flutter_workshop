@@ -5,7 +5,7 @@
 #   bash runtime/deploy/setup_gcp.sh
 #
 # It creates no secret: the Anthropic key (CLAUDE_API_KEY) and the workshop
-# password are GitHub repository secrets. See runtime/deploy/README.md for what each step is for.
+# password are GitHub repository secrets, listed at the end.
 set -euo pipefail
 
 PROJECT="${PROJECT:-gen-lang-client-0563181971}"

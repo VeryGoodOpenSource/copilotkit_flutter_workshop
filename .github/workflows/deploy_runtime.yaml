@@ -1,5 +1,6 @@
 # Deploys the shared backend (runtime/) to Cloud Run on every change to it on main.
-# One-time setup of Google Cloud and of the GitHub secrets: runtime/deploy/README.md
+# One-time setup of Google Cloud: runtime/deploy/setup_gcp.sh, which also lists the
+# GitHub secrets this workflow needs.
 name: deploy_runtime
 
 on:
