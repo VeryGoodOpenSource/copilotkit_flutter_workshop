@@ -6,10 +6,12 @@ import { CopilotRuntime, createCopilotHonoHandler, InMemoryAgentRunner } from "@
 import { CalaveritaAgent, MODEL } from "./agent.js";
 
 process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error("ANTHROPIC_API_KEY is not set. Copy .env.example to .env and put your key in it.");
+if (!process.env.CLAUDE_API_KEY) {
+  console.error("CLAUDE_API_KEY is not set. Copy .env.example to .env and put your key in it.");
   process.exit(1);
 }
+// The Anthropic SDK reads ANTHROPIC_API_KEY, so hand it the key.
+process.env.ANTHROPIC_API_KEY = process.env.CLAUDE_API_KEY;
 
 const runtime = new CopilotRuntime({
   agents: { calaverita: new CalaveritaAgent() },

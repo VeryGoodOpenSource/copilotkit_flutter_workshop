@@ -8,7 +8,7 @@ typecheck it and build the image (`.github/workflows/runtime_ci.yaml`).
 ```
 push to main ──> GitHub Actions ──(Workload Identity, no key file)──> Google Cloud
                    │ build image ─> Artifact Registry ─> Cloud Run
-                   │                                       ▲ ANTHROPIC_API_KEY, WORKSHOP_CODE
+                   │                                       ▲ CLAUDE_API_KEY, WORKSHOP_CODE
                    │                                       │ (GitHub repository secrets)
                    └ smoke test: /info is open, a run without the code is 401
 ```
@@ -17,7 +17,7 @@ push to main ──> GitHub Actions ──(Workload Identity, no key file)──
 
 | Value | Lives in | Why |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | GitHub secret | The workflow passes it to Cloud Run as an environment variable. |
+| `CLAUDE_API_KEY` | GitHub secret | The workflow passes it to Cloud Run as the `CLAUDE_API_KEY` environment variable of the service. |
 | `WORKSHOP_CODE` | GitHub secret | Same. Use letters and digits only: the value is passed in a comma-separated list. |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | GitHub secret | Tells the job which identity provider to sign in with. |
 | `GCP_SERVICE_ACCOUNT` | GitHub secret | The account the job acts as. |
@@ -53,7 +53,7 @@ prints the first two values. The last two commands ask for the value and hide it
 ```sh
 gh secret set GCP_WORKLOAD_IDENTITY_PROVIDER --repo VeryGoodOpenSource/copilotkit_flutter_workshop
 gh secret set GCP_SERVICE_ACCOUNT            --repo VeryGoodOpenSource/copilotkit_flutter_workshop
-gh secret set ANTHROPIC_API_KEY              --repo VeryGoodOpenSource/copilotkit_flutter_workshop
+gh secret set CLAUDE_API_KEY                 --repo VeryGoodOpenSource/copilotkit_flutter_workshop
 gh secret set WORKSHOP_CODE                  --repo VeryGoodOpenSource/copilotkit_flutter_workshop
 ```
 
@@ -76,7 +76,7 @@ node tool/doctor.mjs --only backend --backend <url>
 ## Operating it
 
 - **Rotate the password or the key:** `gh secret set WORKSHOP_CODE` (or
-  `ANTHROPIC_API_KEY`), then run the workflow again so a new revision picks it up.
+  `CLAUDE_API_KEY`), then run the workflow again so a new revision picks it up.
 - **Turn it off after the workshop:** `gcloud run services delete calaverita-runtime --region us-central1`,
   or revoke the Anthropic key. The deployment costs nothing while idle.
 - **One instance on purpose** (`--max-instances=1`): the runtime keeps threads in

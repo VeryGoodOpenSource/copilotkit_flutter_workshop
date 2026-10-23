@@ -135,7 +135,7 @@ async function checkMachine() {
   }
   const env = readEnvFile(`${runtimeDir}/.env`);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
-  const keyName = { openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
+  const keyName = { openai: "OPENAI_API_KEY", anthropic: "CLAUDE_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
   if (!keyName || process.env[keyName] || env[keyName]) {
     report("ok", keyName ? `${keyName} is set (the value is not shown)` : `Model ${model} needs no key`);
   } else {

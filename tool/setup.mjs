@@ -175,7 +175,7 @@ async function ensureKey(dir) {
   const envPath = `${dir}/.env`;
   const env = readEnvFile(envPath);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
-  const variable = { openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
+  const variable = { openai: "OPENAI_API_KEY", anthropic: "CLAUDE_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
   if (!variable) return;
   if (process.env[variable] || env[variable]) {
     say(`${paint("32", "✓")} ${variable} is set (the value is not shown).`);

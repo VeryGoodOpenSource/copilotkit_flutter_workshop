@@ -92,7 +92,7 @@ npm install
 ```
 
 Create your `runtime/.env` from the example, then open it and set
-`ANTHROPIC_API_KEY=<your key>`:
+`CLAUDE_API_KEY=<your key>`:
 
 ```sh
 cp .env.example .env             # macOS and Linux
@@ -169,7 +169,7 @@ Start the server in a first terminal. It uses port 4100, so the runtime of steps
 
 ```sh
 cd 03-custom-server/server
-cp .env.example .env          # set ANTHROPIC_API_KEY
+cp .env.example .env          # set CLAUDE_API_KEY
 npm install
 npm start                     # http://localhost:4100/api/copilotkit
 ```
@@ -200,7 +200,7 @@ fvm flutter run -d chrome \
 
 A runtime on your machine ignores both headers, so leave `WORKSHOP_CODE` out
 there. To host the shared backend, deploy `runtime/` and set `WORKSHOP_CODE` and
-`ANTHROPIC_API_KEY` on the host. The runtime then answers `401` without the
+`CLAUDE_API_KEY` on the host. The runtime then answers `401` without the
 password. `GET /info` and the CORS preflight stay open.
 
 ## How the code is organized

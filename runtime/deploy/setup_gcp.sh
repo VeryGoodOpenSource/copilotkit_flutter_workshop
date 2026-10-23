@@ -4,8 +4,8 @@
 #   gcloud auth login
 #   bash runtime/deploy/setup_gcp.sh
 #
-# It creates no secret: the Anthropic key and the workshop password are GitHub
-# repository secrets. See runtime/deploy/README.md for what each step is for.
+# It creates no secret: the Anthropic key (CLAUDE_API_KEY) and the workshop
+# password are GitHub repository secrets. See runtime/deploy/README.md for what each step is for.
 set -euo pipefail
 
 PROJECT="${PROJECT:-gen-lang-client-0563181971}"
@@ -74,14 +74,14 @@ cat <<OUT
 
   GCP_WORKLOAD_IDENTITY_PROVIDER = $PROVIDER_NAME
   GCP_SERVICE_ACCOUNT            = $DEPLOYER_EMAIL
-  ANTHROPIC_API_KEY              = your Anthropic key
+  CLAUDE_API_KEY                 = your Anthropic key
   WORKSHOP_CODE                  = the password for the participants (letters and digits)
 
 or, with the GitHub CLI (the last two ask for the value, hidden):
 
   gh secret set GCP_WORKLOAD_IDENTITY_PROVIDER --repo $GITHUB_REPO --body "$PROVIDER_NAME"
   gh secret set GCP_SERVICE_ACCOUNT --repo $GITHUB_REPO --body "$DEPLOYER_EMAIL"
-  gh secret set ANTHROPIC_API_KEY --repo $GITHUB_REPO
+  gh secret set CLAUDE_API_KEY --repo $GITHUB_REPO
   gh secret set WORKSHOP_CODE --repo $GITHUB_REPO
 
 After the first deploy the backend answers at:
