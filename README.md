@@ -35,9 +35,10 @@ node tool/setup.mjs
 It installs Flutter 3.47.0 through FVM, checks your machine, asks which step to
 run and which backend to use, and starts the app in Chrome. The backend is one of:
 
-- **The shared backend:** nothing to set up except the workshop password, which
-  you get at the workshop. It asks for it (hidden as you type), or pass
-  `--code <password>`.
+- **The shared backend:** the one we host for the workshop, at
+  `https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`.
+  Nothing to set up except the workshop password, which you get at the workshop.
+  It asks for it (hidden as you type), or pass `--code <password>`.
 - **Your own runtime:** it asks for your Anthropic API key (hidden as you type)
   and starts the runtime in `runtime/` for you.
 - **A custom backend:** any CopilotKit runtime you have a URL for, for example one
@@ -189,7 +190,8 @@ The runtime URL is set in **one place per snapshot**:
 `AppConfig.defaultRuntimeUrl`, or run with
 `--dart-define=RUNTIME_URL=<url>`.
 
-The shared backend also asks for a password. The app sends it, and a random id
+The shared backend (`https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`)
+also asks for a password. The app sends it, and a random id
 of the run, as the `X-Workshop-Code` and `X-Workshop-Session` headers on every
 request:
 
