@@ -227,6 +227,13 @@ packages.
   [SDK example README](https://github.com/VGVentures/copilotkit_flutter_sdk/blob/main/example/README.md#troubleshooting)).
 - **`pub get` can't fetch the SDK**: you need access to the SDK repository.
 
+## License
+
+[MIT](LICENSE). The skull art and the design system come from
+[calaverita_builder](https://github.com/VGVentures/calaverita_builder), the fonts
+in `shared/app_ui` keep their own licenses, and the CopilotKit and Very Good
+Ventures names and logos belong to their owners.
+
 ---
 
 Leading a team that wants to ship AI features in Flutter? Talk to
