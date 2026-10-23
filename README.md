@@ -23,6 +23,27 @@ before it, so compare two folders to see exactly what changed.
 | [`02-generative-ui`](02-generative-ui) | You ask for the calaverita and the agent writes it: a card with the skull appears in the chat and the verse shows under the skull on the stage. | **Generative UI**: a frontend tool registered with `CopilotTool` whose builder renders a widget. |
 | [`03-custom-server`](03-custom-server) | The same app, talking to a small server of its own instead of the built-in agent. *Optional.* | **Server logic**: validating what the agent changes and shaping its prompt. |
 
+## Quick start
+
+Install [FVM](https://fvm.app) and [Node.js](https://nodejs.org) 20 or later, then
+run one command:
+
+```sh
+node tool/setup.mjs
+```
+
+It installs Flutter 3.47.0 through FVM, checks your machine, asks which step to
+run and which backend to use, and starts the app in Chrome. The backend is one of:
+
+- **The shared backend:** nothing to set up.
+- **Your own runtime:** it asks for your Anthropic API key (hidden as you type)
+  and starts the runtime in `runtime/` for you.
+- **A custom backend:** any CopilotKit runtime you have a URL for, for example one
+  made with CopilotKit's own tool (`npx copilotkit with-claude`).
+
+`node tool/setup.mjs --help` lists the options, such as `--step 02 --backend local`
+to skip the questions. The rest of this page does the same thing by hand.
+
 ## Set up
 
 You need:

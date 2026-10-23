@@ -16,6 +16,12 @@ class AppConfig {
     ),
   );
 
-  /// The agent of the server the app chats with.
-  static const agentId = 'calaverita';
+  /// The agent the app chats with.
+  ///
+  /// A runtime can serve several, so a different backend may use another id:
+  /// run with `--dart-define=AGENT_ID=<id>`.
+  static const agentId = String.fromEnvironment(
+    'AGENT_ID',
+    defaultValue: 'calaverita',
+  );
 }
