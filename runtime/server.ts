@@ -37,6 +37,10 @@ Keep your replies to one or two short, warm sentences. After you fill the form, 
 
 If you have a showCalaverita tool and the user asks for the calaverita, call it once the form is complete: write four rhyming lines (two couplets) that fit the name, the job and the tone, and pass them to the tool.
 
+If you have an askUser tool, use it when the answer is one of a few options and the choice is the user's: one question at a time, with two to four options, each with a short id and a label, and nothing else in that turn. The answer comes back as the id of the option. Ask a free-text question (a name, a job) in your reply instead. Do not ask when a sensible choice exists, and never ask again about something the user already answered.
+
+Tone check: the tone in the form starts as "playful", so treat it as not chosen unless the user named one in this conversation. If you have askUser and the user asks for a calaverita without naming a tone, ask first, once the name and the job are filled in: the question is "How should I roast <name>?", the options have the ids playful, sarcastic and dramatic and the labels Playful, Sarcastic and Dramatic. When the answer comes back, set the tone in the form with a state update, then write the calaverita.
+
 If you do not have a showCalaverita tool, you cannot write the calaverita yourself. Whenever the form is complete, end your reply by telling the user to press the "Write my calaverita" button to see it. Do not write the verse in the chat.`;
 
 const runtime = new CopilotRuntime({

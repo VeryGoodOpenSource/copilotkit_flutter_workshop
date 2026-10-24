@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+<path d="M200 60 C300 60 340 130 340 215 C340 270 320 300 300 320 L300 400 C300 425 280 440 255 440 L145 440 C120 440 100 425 100 400 L100 320 C80 300 60 270 60 215 C60 130 100 60 200 60Z" fill="{{fill}}" stroke="{{stroke}}" stroke-width="{{strokeWidth}}" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="112" cy="288" r="17" fill="{{accent}}" fill-opacity=".55"/><circle cx="288" cy="288" r="17" fill="{{accent}}" fill-opacity=".55"/>
+</svg>
