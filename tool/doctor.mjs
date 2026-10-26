@@ -7,6 +7,7 @@
 //   node tool/doctor.mjs                        check everything
 //   node tool/doctor.mjs --backend <url>        also check a hosted runtime, e.g. the shared one
 //   node tool/doctor.mjs --only backend --backend <url>   check just that runtime
+//   --code <password>   (or WORKSHOP_CODE) the password, when the hosted backend asks for one
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -55,8 +56,17 @@ function readEnvFile(path) {
   return values;
 }
 
-async function fetchWithTimeout(url, options = {}) {
-  return fetch(url, { ...options, signal: AbortSignal.timeout(8_000) });
+async function fetchWithTimeout(url, options = {}, timeout = 8_000) {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(timeout) });
+}
+
+/** A hosted backend may be asleep (Cloud Run cold start): wait longer, and try twice. */
+async function fetchHosted(url, options = {}) {
+  try {
+    return await fetchWithTimeout(url, options, 30_000);
+  } catch {
+    return fetchWithTimeout(url, options, 30_000);
+  }
 }
 
 console.log(paint("1", `Calaverita Generator workshop: ${onlyBackend ? "backend" : "setup"} check\n`));
@@ -135,7 +145,7 @@ async function checkMachine() {
   }
   const env = readEnvFile(`${runtimeDir}/.env`);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
-  const keyName = { openai: "OPENAI_API_KEY", anthropic: "CLAUDE_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
+  const keyName = { openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
   if (!keyName || process.env[keyName] || env[keyName]) {
     report("ok", keyName ? `${keyName} is set (the value is not shown)` : `Model ${model} needs no key`);
   } else {
@@ -165,10 +175,10 @@ if (backendIndex !== -1) {
     report("fail", "--backend needs a URL", "Example: node tool/doctor.mjs --backend https://example.com/api/copilotkit");
   } else {
     try {
-      const info = await fetchWithTimeout(`${backend}/info`);
+      const info = await fetchHosted(`${backend}/info`);
       if (!info.ok) throw new Error(`HTTP ${info.status}`);
       report("ok", `The backend answers at ${backend}`);
-      const preflight = await fetchWithTimeout(`${backend}/agent/default/run`, {
+      const preflight = await fetchHosted(`${backend}/agent/default/run`, {
         method: "OPTIONS",
         headers: {
           Origin: "http://localhost:5000",
@@ -179,6 +189,19 @@ if (backendIndex !== -1) {
       const allowed = preflight.headers.get("access-control-allow-origin");
       if (allowed) report("ok", `The backend allows browser requests (CORS: ${allowed})`);
       else report("fail", "The backend does not allow browser requests", "The Flutter web app calls it from the browser, so it must answer the CORS preflight.");
+      // An empty run is refused with 401 before it reaches the model, and with the right password it is a 400.
+      const codeIndex = process.argv.indexOf("--code");
+      const code = (codeIndex !== -1 ? process.argv[codeIndex + 1] : process.env.WORKSHOP_CODE) ?? "";
+      const open = await fetchHosted(`${backend}/agent/default/run`, { method: "POST" });
+      if (open.status !== 401) {
+        report("ok", "The backend asks for no password");
+      } else if (!code) {
+        report("ok", "The backend asks for a workshop password", "Pass it with --code <password> to check it.");
+      } else {
+        const withCode = await fetchHosted(`${backend}/agent/default/run`, { method: "POST", headers: { "X-Workshop-Code": code } });
+        if (withCode.status === 401) report("fail", "The backend refused the workshop password", "Check it with the organizer.");
+        else report("ok", "The workshop password is accepted");
+      }
       if (backend.startsWith("http://") && !backend.includes("localhost")) {
         report("warn", "The backend is plain http", "A page served over https can't call it. Use https for a hosted app.");
       }

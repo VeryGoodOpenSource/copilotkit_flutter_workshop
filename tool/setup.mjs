@@ -133,8 +133,8 @@ function readEnvFile(path) {
   return values;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+async function fetchJson(url, timeout = 8_000) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
 }
@@ -175,7 +175,7 @@ async function ensureKey(dir) {
   const envPath = `${dir}/.env`;
   const env = readEnvFile(envPath);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
-  const variable = { openai: "OPENAI_API_KEY", anthropic: "CLAUDE_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
+  const variable = { openai: "OPENAI_API_KEY", anthropic: "ANTHROPIC_API_KEY", google: "GOOGLE_API_KEY", gemini: "GOOGLE_API_KEY" }[model.split(/[:/]/)[0].toLowerCase()];
   if (!variable) return;
   if (process.env[variable] || env[variable]) {
     say(`${paint("32", "✓")} ${variable} is set (the value is not shown).`);
@@ -200,6 +200,33 @@ async function useOwnServer({ dir, port, agent }) {
   backend = { url: `http://localhost:${port}/api/copilotkit`, agent: option("agent") ?? agent, folder };
 }
 
+/** POSTs an empty run: 401 means the code is missing or wrong, a 400 means the backend let it through. */
+async function runStatus(base, agent, code) {
+  const response = await fetch(`${base.replace(/\/$/, "")}/agent/${agent}/run`, {
+    method: "POST",
+    headers: code ? { "X-Workshop-Code": code } : {},
+    signal: AbortSignal.timeout(30_000),
+  });
+  return response.status;
+}
+
+/** The password of a backend: none when it asks for none, else the one given, checked before the app starts. */
+async function workshopCodeFor(base, agent) {
+  try {
+    if ((await runStatus(base, agent, "")) !== 401) return "";
+  } catch {
+    return ""; // the doctor already said whether the backend answers
+  }
+  let code = option("code") ?? process.env.WORKSHOP_CODE;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    code ??= (await askSecret("Workshop password (nothing is shown as you type):")) ?? "";
+    if (code && (await runStatus(base, agent, code).catch(() => 0)) !== 401) return code;
+    say(`${paint("31", "✗")} The backend refused that password.`);
+    code = undefined;
+  }
+  return fail("The workshop password was not accepted.", "Ask the organizer for it and pass it with --code <password>.");
+}
+
 async function useExternal(url, defaultAgent) {
   const base = url.replace(/\/$/, "");
   if (!runVisible("node", ["tool/doctor.mjs", "--only", "backend", "--backend", base])) {
@@ -207,7 +234,7 @@ async function useExternal(url, defaultAgent) {
   }
   let agent = option("agent") ?? defaultAgent;
   try {
-    const ids = Object.keys((await fetchJson(`${base}/info`)).agents ?? {});
+    const ids = Object.keys((await fetchJson(`${base}/info`, 30_000)).agents ?? {});
     if (ids.length && !ids.includes(agent)) {
       agent = ids.length === 1 ? ids[0] : await choose("This backend has several agents. Which one?", ids.map((id) => ({ key: id, label: id })), ids[0]);
       say(`Using the agent "${agent}".`);
@@ -234,7 +261,7 @@ if (stepKey !== "00" && step.server) {
   if (kind === "shared") {
     if (!config.sharedBackendUrl) fail("The shared backend is not configured yet.", "Use --backend local, or --backend custom --url <url>.");
     await useExternal(config.sharedBackendUrl, config.sharedAgentId ?? "default");
-    workshopCode = option("code") ?? process.env.WORKSHOP_CODE ?? (await askSecret("Workshop password (nothing is shown as you type, empty if there is none):")) ?? "";
+    workshopCode = await workshopCodeFor(config.sharedBackendUrl, config.sharedAgentId ?? "default");
   } else if (kind === "custom") {
     say("\nTo make a backend with CopilotKit's tool, run this in another terminal and follow its steps:");
     hint("npx copilotkit with-claude my-backend");
@@ -256,7 +283,7 @@ const appDir = `${stepDir}/apps/calaverita_app`;
 const appArgs = ["flutter", "run", "-d", "chrome", ...(backend ? [`--dart-define=RUNTIME_URL=${backend.url}`, `--dart-define=AGENT_ID=${backend.agent}`, ...(workshopCode ? [`--dart-define=WORKSHOP_CODE=${workshopCode}`] : [])] : [])];
 const appCommand = `fvm ${appArgs.join(" ")}`;
 /** The same command for the screen: the password is never printed. */
-const shownCommand = workshopCode ? appCommand.replace(workshopCode, "<workshop password>") : appCommand;
+const shownCommand = `fvm ${appArgs.map((arg) => (arg.startsWith("--dart-define=WORKSHOP_CODE=") ? "--dart-define=WORKSHOP_CODE=<workshop password>" : arg)).join(" ")}`;
 
 /** Starts the backend of ours in the background and waits until it answers. Returns a function that stops it. */
 async function startBackend() {

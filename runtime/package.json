@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx server.ts",
-    "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck --types node server.ts"
+    "test": "tsx --test gate.test.ts",
+    "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck --types node server.ts gate.test.ts"
   },
   "dependencies": {
     "@copilotkit/runtime": "^1.79.0"

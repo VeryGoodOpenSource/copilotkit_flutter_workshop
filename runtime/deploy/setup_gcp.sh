@@ -4,8 +4,13 @@
 #   gcloud auth login
 #   bash runtime/deploy/setup_gcp.sh
 #
-# It creates no secret: the Anthropic key (CLAUDE_API_KEY) and the workshop
-# password are GitHub repository secrets, listed at the end.
+# The Anthropic key and the workshop password live in Secret Manager, and Cloud Run
+# reads them as the runtime service account. Pass them as ANTHROPIC_API_KEY and
+# WORKSHOP_CODE in the environment, or let the script ask (the input is hidden).
+# To change one later, run the script again with the new value.
+#
+# Run it again after the first deploy: only then does the service exist, and the
+# script makes it public (see step 6).
 set -euo pipefail
 
 PROJECT="${PROJECT:-gen-lang-client-0563181971}"
@@ -23,7 +28,7 @@ step() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 
 step "1. Enabling the APIs"
 gc services enable \
-  run.googleapis.com artifactregistry.googleapis.com \
+  run.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com \
   iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
   cloudresourcemanager.googleapis.com
 
@@ -48,9 +53,12 @@ gc iam service-accounts describe "$DEPLOYER_EMAIL" >/dev/null 2>&1 \
 step "4. What the deployer may do"
 gc artifacts repositories add-iam-policy-binding "$REGISTRY" --location "$REGION" \
   --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/artifactregistry.writer >/dev/null
-# run.admin, not run.developer: the first deploy sets the service public.
+# run.developer deploys revisions but cannot change who may call the service (step 6).
 gc projects add-iam-policy-binding "$PROJECT" \
-  --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/run.admin --condition=None >/dev/null
+  --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/run.developer --condition=None >/dev/null
+# Earlier versions of this script gave the deployer run.admin; take it back.
+gc projects remove-iam-policy-binding "$PROJECT" \
+  --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/run.admin --condition=None >/dev/null 2>&1 || true
 gc iam service-accounts add-iam-policy-binding "$RUNTIME_EMAIL" \
   --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/iam.serviceAccountUser >/dev/null
 
@@ -69,20 +77,45 @@ gc iam service-accounts add-iam-policy-binding "$DEPLOYER_EMAIL" \
 
 PROVIDER_NAME="$(gc iam workload-identity-pools providers describe "$PROVIDER" --workload-identity-pool "$POOL" --location global --format='value(name)')"
 
-step "Done. Add these four secrets to GitHub (Settings > Secrets and variables > Actions):"
+step "6. Secrets in Secret Manager"
+# Create the secret, let the runtime service account read it, and add a version when given a value.
+store_secret() {
+  local name="$1" value="${2:-}"
+  gc secrets describe "$name" >/dev/null 2>&1 || gc secrets create "$name" --replication-policy automatic >/dev/null
+  gc secrets add-iam-policy-binding "$name" \
+    --member "serviceAccount:$RUNTIME_EMAIL" --role roles/secretmanager.secretAccessor >/dev/null
+  if [ -z "$value" ] && ! gc secrets versions list "$name" --limit 1 --format='value(name)' | grep -q .; then
+    read -rsp "Value of $name (hidden): " value; echo
+  fi
+  if [ -n "$value" ]; then printf '%s' "$value" | gc secrets versions add "$name" --data-file=- >/dev/null; fi
+}
+store_secret anthropic-api-key "${ANTHROPIC_API_KEY:-}"
+store_secret workshop-code "${WORKSHOP_CODE:-}"
+
+step "7. Who may call the service"
+# The deployer cannot do this itself, so it happens here, once the service exists.
+if gc run services describe "$SERVICE" --region "$REGION" >/dev/null 2>&1; then
+  gc run services add-iam-policy-binding "$SERVICE" --region "$REGION" \
+    --member allUsers --role roles/run.invoker >/dev/null
+  echo "The service is public (the workshop password still guards it)."
+else
+  echo "The service does not exist yet. Deploy once, then run this script again to make it public."
+fi
+
+step "Done. Add these two secrets to GitHub (Settings > Secrets and variables > Actions):"
 cat <<OUT
 
   GCP_WORKLOAD_IDENTITY_PROVIDER = $PROVIDER_NAME
   GCP_SERVICE_ACCOUNT            = $DEPLOYER_EMAIL
-  CLAUDE_API_KEY                 = your Anthropic key
-  WORKSHOP_CODE                  = the password for the participants (letters and digits)
 
-or, with the GitHub CLI (the last two ask for the value, hidden):
+or, with the GitHub CLI:
 
   gh secret set GCP_WORKLOAD_IDENTITY_PROVIDER --repo $GITHUB_REPO --body "$PROVIDER_NAME"
   gh secret set GCP_SERVICE_ACCOUNT --repo $GITHUB_REPO --body "$DEPLOYER_EMAIL"
-  gh secret set CLAUDE_API_KEY --repo $GITHUB_REPO
-  gh secret set WORKSHOP_CODE --repo $GITHUB_REPO
+
+The Anthropic key and the workshop password are not GitHub secrets any more: they are
+in Secret Manager (anthropic-api-key, workshop-code). The old repository secrets
+ANTHROPIC_API_KEY (and CLAUDE_API_KEY) and WORKSHOP_CODE can be deleted.
 
 After the first deploy the backend answers at:
 

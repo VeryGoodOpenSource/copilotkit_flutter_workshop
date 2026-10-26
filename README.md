@@ -93,7 +93,7 @@ npm install
 ```
 
 Create your `runtime/.env` from the example, then open it and set
-`CLAUDE_API_KEY=<your key>`:
+`ANTHROPIC_API_KEY=<your key>`:
 
 ```sh
 cp .env.example .env             # macOS and Linux
@@ -170,7 +170,7 @@ Start the server in a first terminal. It uses port 4100, so the runtime of steps
 
 ```sh
 cd 03-custom-server/server
-cp .env.example .env          # set CLAUDE_API_KEY
+cp .env.example .env          # set ANTHROPIC_API_KEY
 npm install
 npm start                     # http://localhost:4100/api/copilotkit
 ```
@@ -196,14 +196,27 @@ of the run, as the `X-Workshop-Code` and `X-Workshop-Session` headers on every
 request:
 
 ```sh
-fvm flutter run -d chrome \
-  --dart-define=RUNTIME_URL=<url> --dart-define=WORKSHOP_CODE=<password>
+fvm flutter run -d chrome --dart-define=RUNTIME_URL=<url> --dart-define=WORKSHOP_CODE=<password>
 ```
+
+`--dart-define` compiles the password into the build, so **a build made with
+`WORKSHOP_CODE` contains the password**: anyone who has that web build can read
+it. Run it locally, and never host a build made with the code.
 
 A runtime on your machine ignores both headers, so leave `WORKSHOP_CODE` out
 there. To host the shared backend, deploy `runtime/` and set `WORKSHOP_CODE` and
-`CLAUDE_API_KEY` on the host. The runtime then answers `401` without the
+`ANTHROPIC_API_KEY` on the host. The runtime then answers `401` without the
 password. `GET /info` and the CORS preflight stay open.
+
+The runtime also logs one line per run with the session id, and answers `429`
+once a session passes `MAX_RUNS_PER_SESSION` runs (default 100) or all sessions
+pass `MAX_RUNS_TOTAL` (default 5000). Change `WORKSHOP_CODE` after the event,
+and set a spend limit on the Anthropic key: `--max-instances=1` limits
+concurrency, not cost.
+
+A hosted backend that has been idle takes a few seconds to wake up, so the
+first check or message can be slow. To warm it before the event, run the
+`warm_runtime` workflow from the Actions tab.
 
 ## How the code is organized
 

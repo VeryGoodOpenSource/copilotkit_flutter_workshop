@@ -32,18 +32,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Sign in to Google Cloud
         id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
 
       - name: Sign in to Artifact Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGION }}-docker.pkg.dev
           username: oauth2accesstoken
@@ -58,23 +58,23 @@ jobs:
           docker push "$IMAGE"
           echo "name=$IMAGE" >> "$GITHUB_OUTPUT"
 
-      # The key and the password are repository secrets. GitHub masks them in the
-      # logs; Cloud Run keeps them as environment variables of the revision.
+      # The key and the password stay in Secret Manager: Cloud Run hands them to the
+      # revision as environment variables, read as the runtime service account.
       - name: Deploy to Cloud Run
         id: deploy
-        uses: google-github-actions/deploy-cloudrun@v2
+        uses: google-github-actions/deploy-cloudrun@251330ba9a8a34bfbc1622895f42e1d53fd14522 # v2
         with:
           project_id: ${{ env.PROJECT_ID }}
           region: ${{ env.REGION }}
           service: ${{ env.SERVICE }}
           image: ${{ steps.image.outputs.name }}
-          env_vars: |
-            CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
-            WORKSHOP_CODE=${{ secrets.WORKSHOP_CODE }}
+          secrets: |
+            ANTHROPIC_API_KEY=anthropic-api-key:latest
+            WORKSHOP_CODE=workshop-code:latest
           flags: >-
             --service-account=${{ env.RUNTIME_SERVICE_ACCOUNT }}
-            --allow-unauthenticated
             --max-instances=1
+            --cpu-boost
             --memory=512Mi
             --timeout=900
 
@@ -83,7 +83,8 @@ jobs:
         env:
           BASE: ${{ steps.deploy.outputs.url }}/api/copilotkit
         run: |
-          curl --fail --silent --show-error --retry 5 --retry-delay 5 --retry-all-errors "$BASE/info" | jq -e '.agents.default'
+          curl --fail --silent --show-error --retry 5 --retry-delay 5 --retry-all-errors "$BASE/info" | jq -e '.agents.default' \
+            || { echo "If this is a 403, the service is not public yet: run runtime/deploy/setup_gcp.sh again."; exit 1; }
           status=$(curl --silent --output /dev/null --write-out '%{http_code}' --request POST "$BASE/agent/default/run" --data '{}')
           test "$status" = 401 || { echo "Expected 401 without the workshop code, got $status"; exit 1; }
           echo "Deployed: $BASE"

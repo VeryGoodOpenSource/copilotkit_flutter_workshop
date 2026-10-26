@@ -9,7 +9,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --include=dev --no-audit --no-fund
 
-COPY server.ts env.ts ./
+COPY server.ts env.ts gate.ts ./
 
 USER node
 # Cloud Run sets PORT; server.ts reads it and listens on 0.0.0.0.

@@ -1,11 +1,11 @@
 // Copilot Runtime for the Calaverita Generator workshop, based on the
 // CopilotKit Flutter SDK's example runtime. Start it with `npm start`.
 import "./env.js";
-import { timingSafeEqual } from "node:crypto";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer } from "node:http";
 import { networkInterfaces } from "node:os";
 import { BuiltInAgent, CopilotRuntime } from "@copilotkit/runtime/v2";
 import { createCopilotNodeListener } from "@copilotkit/runtime/v2/node";
+import { createGate } from "./gate.js";
 
 const basePath = "/api/copilotkit";
 process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
@@ -61,23 +61,15 @@ function lanAddresses(): string[] {
 const copilot = createCopilotNodeListener({ runtime, basePath, cors: true });
 
 // The shared deployment sets WORKSHOP_CODE; a runtime on your machine leaves it
-// out and asks for nothing. The app sends the code as X-Workshop-Code (and a
-// random id of its run as X-Workshop-Session, which this server ignores). `/info`
-// and the CORS preflight stay open, so `tool/doctor.mjs` and the browser work
-// without the code.
-const workshopCode = process.env.WORKSHOP_CODE;
-
-function guarded(req: IncomingMessage, res: ServerResponse) {
-  const path = (req.url ?? "").split("?")[0];
-  if (!workshopCode || req.method === "OPTIONS" || path.endsWith("/info")) return copilot(req, res);
-
-  const given = Buffer.from(String(req.headers["x-workshop-code"] ?? ""));
-  const wanted = Buffer.from(workshopCode);
-  if (given.length === wanted.length && timingSafeEqual(given, wanted)) return copilot(req, res);
-
-  res.writeHead(401, { "content-type": "application/json", "access-control-allow-origin": "*" });
-  res.end(JSON.stringify({ error: "Missing or wrong workshop code." }));
-}
+// out and asks for nothing. The app sends the code as X-Workshop-Code and a
+// random id of its run as X-Workshop-Session, which the gate logs and counts
+// (see gate.ts).
+const guarded = createGate(copilot, {
+  code: process.env.WORKSHOP_CODE,
+  maxRunsPerSession: Number(process.env.MAX_RUNS_PER_SESSION ?? 100),
+  maxRunsTotal: Number(process.env.MAX_RUNS_TOTAL ?? 5000),
+  log: console.log,
+});
 
 createServer(guarded).listen(
   port,
