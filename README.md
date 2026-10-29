@@ -116,7 +116,7 @@ To use another model, set `COPILOTKIT_MODEL` in `runtime/.env`. The default is
 **2. Run the app** in a second terminal. `00-foundations` needs no runtime.
 
 ```sh
-cd 01-shared-state            # or 00-foundations, 02-generative-ui
+cd 01-shared-state            # or 00-foundations, 02-generative-ui, 03-human-in-the-loop
 fvm flutter pub get
 cd apps/calaverita_app
 fvm flutter run -d chrome
@@ -241,7 +241,7 @@ packages.
 - Replace the template repository with a call to the agent, so the *Write my
   calaverita* button uses the model too.
 - Save the calaverita as an image, or share it.
-- Run your own agent server. `03-custom-server/server` is a small custom one that
+- Run your own agent server. `extras/custom-server/server` is a small custom one that
   checks every change the agent makes to the form. Start it (`npm install`, then
   `npm start`) and point the app at it with
   `node tool/setup.mjs --backend custom --url http://localhost:4100/api/copilotkit --agent calaverita`.
