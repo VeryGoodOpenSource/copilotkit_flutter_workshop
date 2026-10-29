@@ -145,12 +145,12 @@ const isRunning = (url) => fetchJson(`${url}/info`).then(() => true, () => false
 
 heading("1. Checking your machine");
 if (!runQuiet("fvm", ["--version"]).ok) {
-  runVisible("node", ["tool/doctor.mjs"]);
+  runVisible("node", ["tool/doctor.mjs", "--only", "machine"]);
   fail("FVM is missing, install it first (see above), then run this again.");
 }
 say("Installing Flutter 3.47.0 through FVM (a few minutes the first time)...");
-if (!runVisible("fvm", ["install"])) fail("`fvm install` failed.", "On Windows, turn on Developer Mode (Settings → System → For developers) and try again.");
-if (!runVisible("node", ["tool/doctor.mjs"])) fail("Fix the items marked ✗ above, then run this again.");
+if (!runVisible("fvm", ["install", "--skip-pub-get"])) fail("`fvm install` failed.", "On Windows, turn on Developer Mode (Settings → System → For developers) and try again.");
+if (!runVisible("node", ["tool/doctor.mjs", "--only", "machine"])) fail("Fix the items marked ✗ above, then run this again.");
 
 // ---------------------------------------------------------------- the step
 

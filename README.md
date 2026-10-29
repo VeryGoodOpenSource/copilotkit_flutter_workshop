@@ -54,7 +54,8 @@ You need:
 - [FVM](https://fvm.app). The repository pins Flutter 3.47.0 in `.fvmrc`, and the
   SDK needs Dart 3.13 or later.
 - Node.js 20 or later, for the runtime.
-- An [Anthropic API key](https://console.anthropic.com).
+- An [Anthropic API key](https://console.anthropic.com), only to run your own
+  runtime. The shared backend needs none.
 - Chrome.
 
 ```sh
@@ -67,6 +68,9 @@ Linux, and it never prints your key:
 ```sh
 node tool/doctor.mjs
 ```
+
+It checks your machine and the shared backend. Your own runtime is optional, so
+what it still lacks is listed as information (`·`), not as a warning.
 
 > [!NOTE]
 > **Windows:** turn on *Developer Mode* (Settings → System → For developers)
@@ -128,6 +132,16 @@ Each step adds one thing the one before it couldn't do. The **Write my
 calaverita** button always uses the offline template, so it works in every step.
 From step 02 the agent can write a verse too.
 
+To see what a step adds, compare its folder with the one before, from the root of
+the repository (add `--stat` for the list of files):
+
+```sh
+git diff HEAD:00-foundations HEAD:01-shared-state -- ':!pubspec.lock' ':!**/test/**'
+```
+
+Steps 01 to 03 end with a **challenge** for Claude Code, about five minutes each.
+They change only the app, so they work with the shared backend too.
+
 #### 00 · Foundations (no agent)
 
 1. Type a name and a job. The button stays disabled until both are filled.
@@ -152,6 +166,11 @@ your edit, because it reads the same shared state.
 **Not yet:** the agent can't write the verse. Press **Write my calaverita** to
 get the template one.
 
+**Challenge:** add a **nickname** to the form. It goes in the shared state with
+the name and the job, so the agent sees it and fills it in when you say *"his
+nickname is El Sazón"*. Ask Claude Code: *"Add an optional nickname field to the
+calaverita draft and the form, in 01-shared-state."*
+
 #### 02 · Generative UI (the agent writes the calaverita)
 
 Type: *"Mario is a chef, dramatic please. Write his calaverita!"*
@@ -161,6 +180,12 @@ with the skull portrait and a four-line verse appear in the chat. The same verse
 shows under the skull on the stage.
 
 If the name or the job is missing, the agent asks for it instead.
+
+**Challenge:** give the calaverita a **title**. Add a `title` argument to the
+`showCalaverita` tool and show it on the card: the agent reads the tool's
+parameters, so it writes one with no change to its prompt. Ask Claude Code:
+*"Add a short title argument to the showCalaverita tool in 02-generative-ui and
+show it at the top of the card."*
 
 #### 03 · Human in the loop (the agent asks you)
 
@@ -176,6 +201,13 @@ Name a tone in your message (*"Write a sarcastic calaverita for Mario, a chef"*)
 and it doesn't ask. While the question waits, the copilot isn't "working": the
 **Stop** button and the typing dots go away, and the message box points to the
 card.
+
+**Challenge:** let the agent ask with **colors** instead of words. Add a
+`pickColor` tool like `askUser`, whose card shows color swatches, then say
+*"let me pick the skull color"*. The tool's description is enough for the agent
+to use it. Ask Claude Code: *"Add a pickColor human-in-the-loop tool in
+03-human-in-the-loop, like askUser, whose card shows four color swatches and
+returns the hex color, then set the skull color with it."*
 
 ## Point the app at another backend
 
