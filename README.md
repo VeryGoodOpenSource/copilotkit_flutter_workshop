@@ -21,7 +21,7 @@ before it, so compare two folders to see exactly what changed.
 | [`00-foundations`](00-foundations) | The app with local state and no agent. You fill the form, dress the skull and press a button. | The architecture: a domain, a data and a presentation package per feature. |
 | [`01-shared-state`](01-shared-state) | A copilot panel appears. You tell it about your friend and it fills the form and dresses the skull. | **Shared state**: `AgentStateBuilder`, `patchSharedState` and `setSharedState`. |
 | [`02-generative-ui`](02-generative-ui) | You ask for the calaverita and the agent writes it: a card with the skull appears in the chat and the verse shows under the skull on the stage. | **Generative UI**: a frontend tool registered with `CopilotTool` whose builder renders a widget. |
-| [`03-custom-server`](03-custom-server) | The same app, talking to a small server of its own instead of the built-in agent. *Optional.* | **Server logic**: validating what the agent changes and shaping its prompt. |
+| [`03-human-in-the-loop`](03-human-in-the-loop) | You ask for a calaverita without a tone and the agent asks you how to roast, with buttons in the chat. | **Human in the loop**: a tool registered with `CopilotHumanInTheLoop`, whose run waits for your answer. |
 
 ## Quick start
 
@@ -82,8 +82,7 @@ node tool/doctor.mjs
 ## Run a step
 
 The app talks to a *Copilot Runtime*, a small server that sits between the app
-and the model. Steps 01 and 02 use the one in [`runtime/`](runtime); step 03 has
-its own.
+and the model. Steps 01 to 03 use the one in [`runtime/`](runtime).
 
 **1. Start the runtime** (steps 01 and 02) in a first terminal:
 
@@ -117,7 +116,7 @@ To use another model, set `COPILOTKIT_MODEL` in `runtime/.env`. The default is
 **2. Run the app** in a second terminal. `00-foundations` needs no runtime.
 
 ```sh
-cd 01-shared-state            # or 00-foundations, 02-generative-ui
+cd 01-shared-state            # or 00-foundations, 02-generative-ui, 03-human-in-the-loop
 fvm flutter pub get
 cd apps/calaverita_app
 fvm flutter run -d chrome
@@ -127,7 +126,7 @@ fvm flutter run -d chrome
 
 Each step adds one thing the one before it couldn't do. The **Write my
 calaverita** button always uses the offline template, so it works in every step.
-In steps 02 and 03 the agent can write a verse too.
+From step 02 the agent can write a verse too.
 
 #### 00 · Foundations (no agent)
 
@@ -163,25 +162,20 @@ shows under the skull on the stage.
 
 If the name or the job is missing, the agent asks for it instead.
 
-#### 03 · Custom server (optional)
+#### 03 · Human in the loop (the agent asks you)
 
-Start the server in a first terminal. It uses port 4100, so the runtime of steps
-01 and 02 can keep running:
+Type a request **without a tone**: *"Write a calaverita for Mario, a chef"*. You
+can also click that suggestion.
 
-```sh
-cd 03-custom-server/server
-cp .env.example .env          # set ANTHROPIC_API_KEY
-npm install
-npm start                     # http://localhost:4100/api/copilotkit
-```
+**You should see:** the form fill in with Mario and chef, then a **Question**
+card in the chat: *"How should I roast Mario?"* with **Playful**, **Sarcastic**
+and **Dramatic**. The agent waits. Tap one, and it sets the tone, writes the
+calaverita and shows it in the chat and on the stage.
 
-Then run the app from `03-custom-server` as above and try the same messages as
-in step 02.
-
-**What's different:** this server checks every change the agent makes to the
-form and tells the model what it rejected, so it can fix it and try again. It
-also puts the current form in the prompt on every run. `npm run smoke` runs its
-checks offline, with no key.
+Name a tone in your message (*"Write a sarcastic calaverita for Mario, a chef"*)
+and it doesn't ask. While the question waits, the copilot isn't "working": the
+**Stop** button and the typing dots go away, and the message box points to the
+card.
 
 ## Point the app at another backend
 
@@ -242,12 +236,15 @@ packages.
 
 - Give the skull more parts: a beard, a different pattern, a bandana. Add the SVG
   and the variant in `SkullPart`, and teach the agent in the prompt.
-- Let the agent ask before it guesses, with a human-in-the-loop tool
-  (`CopilotHumanInTheLoop`): *"make it fancier"* could offer three options.
+- Let the agent ask more: *"make it fancier"* could offer three skull styles with
+  the `askUser` tool of step 03.
 - Replace the template repository with a call to the agent, so the *Write my
   calaverita* button uses the model too.
 - Save the calaverita as an image, or share it.
-- Move the step 03 server somewhere public and point `AppConfig` at it.
+- Run your own agent server. `extras/custom-server/server` is a small custom one that
+  checks every change the agent makes to the form. Start it (`npm install`, then
+  `npm start`) and point the app at it with
+  `node tool/setup.mjs --backend custom --url http://localhost:4100/api/copilotkit --agent calaverita`.
 
 ## Troubleshooting
 

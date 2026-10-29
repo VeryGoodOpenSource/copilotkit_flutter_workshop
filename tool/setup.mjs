@@ -11,7 +11,7 @@
 //
 // Options (everything is asked when left out):
 //   --step <00|01|02|03>             which step to run
-//   --backend <shared|local|custom>  which backend to use (step 03 always runs its own server)
+//   --backend <shared|local|custom>  which backend to use
 //   --url <url>                      the runtime URL, for a custom backend
 //   --agent <id>                     the agent id, when the backend has more than one
 //   --code <code>                    the workshop password of the shared backend (or set WORKSHOP_CODE)
@@ -36,7 +36,7 @@ const STEPS = {
   "00": { dir: "00-foundations", title: "Foundations, no agent" },
   "01": { dir: "01-shared-state", title: "Shared state, the agent fills the form" },
   "02": { dir: "02-generative-ui", title: "Generative UI, the agent writes the calaverita" },
-  "03": { dir: "03-custom-server", title: "Custom server, optional", server: { dir: "server", port: 4100, agent: "calaverita" } },
+  "03": { dir: "03-human-in-the-loop", title: "Human in the loop, the agent asks you" },
 };
 const LOCAL_RUNTIME = { dir: "runtime", port: 8200, agent: "default" };
 const config = JSON.parse(readFileSync(`${root}tool/workshop.config.json`, "utf8"));
@@ -245,11 +245,7 @@ async function useExternal(url, defaultAgent) {
   backend = { url: base, agent };
 }
 
-if (stepKey !== "00" && step.server) {
-  heading("2. Backend");
-  say(`Step 03 has a server of its own, in ${step.dir}/${step.server.dir}.`);
-  await useOwnServer({ ...step.server, dir: `${step.dir}/${step.server.dir}` });
-} else if (stepKey !== "00") {
+if (stepKey !== "00") {
   heading("2. Backend");
   const choices = [
     ...(config.sharedBackendUrl ? [{ key: "shared", label: "The shared backend, nothing to set up" }] : []),
