@@ -4,10 +4,14 @@
 // Plain Node with no dependencies, so it runs the same on macOS, Linux and Windows.
 // It never prints an API key, it only says whether one is set.
 //
-//   node tool/doctor.mjs                        check everything
-//   node tool/doctor.mjs --backend <url>        also check a hosted runtime, e.g. the shared one
+//   node tool/doctor.mjs                        check the machine, the shared backend and your own runtime
+//   node tool/doctor.mjs --backend <url>        check another hosted runtime instead of the shared one
+//   node tool/doctor.mjs --only machine         check just the machine (what setup runs first)
 //   node tool/doctor.mjs --only backend --backend <url>   check just that runtime
 //   --code <password>   (or WORKSHOP_CODE) the password, when the hosted backend asks for one
+//
+// Your own runtime is optional (the shared backend needs none), so what it lacks is
+// shown as information, not as a warning.
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -21,12 +25,14 @@ const SDK_REPO = "https://github.com/VGVentures/copilotkit_flutter_sdk.git";
 const FLUTTER_VERSION = "3.47.0";
 const RUNTIME_URL = "http://localhost:8200/api/copilotkit";
 
-const onlyBackend = process.argv.includes("--only") && process.argv[process.argv.indexOf("--only") + 1] === "backend";
+const only = process.argv.includes("--only") ? process.argv[process.argv.indexOf("--only") + 1] : undefined;
+const onlyBackend = only === "backend";
+const onlyMachine = only === "machine";
 
-const results = { ok: 0, warn: 0, fail: 0 };
+const results = { ok: 0, info: 0, warn: 0, fail: 0 };
 function report(level, title, hint) {
   results[level]++;
-  const mark = { ok: paint("32", "✓"), warn: paint("33", "!"), fail: paint("31", "✗") }[level];
+  const mark = { ok: paint("32", "✓"), info: paint("2", "·"), warn: paint("33", "!"), fail: paint("31", "✗") }[level];
   console.log(`${mark} ${title}`);
   if (hint) for (const line of [].concat(hint)) console.log(`    ${paint("2", line)}`);
 }
@@ -71,8 +77,9 @@ async function fetchHosted(url, options = {}) {
 
 console.log(paint("1", `Calaverita Generator workshop: ${onlyBackend ? "backend" : "setup"} check\n`));
 
-/** The checks of this machine and of the local runtime. */
+/** The checks of this machine. */
 async function checkMachine() {
+  if (!onlyMachine) console.log(paint("1", "Your machine"));
   // Node.js
   const [major, minor] = process.versions.node.split(".").map(Number);
   if (major < 20) {
@@ -135,13 +142,16 @@ async function checkMachine() {
       SDK_REPO,
     ]);
   }
+}
 
-  // The runtime of steps 01 and 02
+/** Your own runtime (the runtime/ folder): optional, `node tool/setup.mjs` sets it up when you pick it. */
+async function checkLocalRuntime() {
+  console.log(`\n${paint("1", "Your own runtime")} ${paint("2", "(only for the local backend, setup prepares it when you pick it)")}`);
   const runtimeDir = `${root}runtime`;
   if (existsSync(`${runtimeDir}/node_modules`) || existsSync(`${runtimeDir}\\node_modules`)) {
     report("ok", "Runtime dependencies are installed");
   } else {
-    report("warn", "Runtime dependencies are not installed", "Run `npm install` in the runtime folder.");
+    report("info", "Runtime dependencies are not installed yet");
   }
   const env = readEnvFile(`${runtimeDir}/.env`);
   const model = process.env.COPILOTKIT_MODEL || env.COPILOTKIT_MODEL || "anthropic:claude-sonnet-5-5";
@@ -149,10 +159,7 @@ async function checkMachine() {
   if (!keyName || process.env[keyName] || env[keyName]) {
     report("ok", keyName ? `${keyName} is set (the value is not shown)` : `Model ${model} needs no key`);
   } else {
-    report("warn", `${keyName} is not set`, [
-      "You need it to run your own runtime: copy runtime/.env.example to runtime/.env and fill it in.",
-      "No key yet? Point the app at the shared backend instead, it needs no setup.",
-    ]);
+    report("info", `${keyName} is not set`);
   }
 
   // Is a runtime running?
@@ -161,16 +168,25 @@ async function checkMachine() {
     if (response.ok) report("ok", `A runtime is running at ${RUNTIME_URL}`);
     else report("warn", `Something answers at ${RUNTIME_URL} but not like a runtime (HTTP ${response.status})`);
   } catch {
-    report("warn", "No runtime is running yet", "Start it with `npm start` in the runtime folder, it prints the URL.");
+    report("info", "No runtime is running");
   }
 }
 
 if (!onlyBackend) await checkMachine();
 
-// A hosted backend, when asked
+// A hosted backend: the one given, else the shared one of the workshop
 const backendIndex = process.argv.indexOf("--backend");
-if (backendIndex !== -1) {
-  const backend = (process.argv[backendIndex + 1] ?? "").replace(/\/$/, "");
+const sharedBackendUrl = (() => {
+  try {
+    return JSON.parse(readFileSync(`${root}tool/workshop.config.json`, "utf8")).sharedBackendUrl;
+  } catch {
+    return undefined;
+  }
+})();
+const backendArg = backendIndex !== -1 ? process.argv[backendIndex + 1] ?? "" : only ? undefined : sharedBackendUrl;
+if (backendArg !== undefined) {
+  const backend = backendArg.replace(/\/$/, "");
+  if (!onlyBackend) console.log(`\n${paint("1", backend === sharedBackendUrl?.replace(/\/$/, "") ? "The shared backend" : "The backend")}`);
   if (!backend) {
     report("fail", "--backend needs a URL", "Example: node tool/doctor.mjs --backend https://example.com/api/copilotkit");
   } else {
@@ -210,6 +226,8 @@ if (backendIndex !== -1) {
     }
   }
 }
+
+if (!only) await checkLocalRuntime();
 
 console.log(
   `\n${results.fail === 0 ? paint("32", "Ready to go.") : paint("31", `${results.fail} thing${results.fail === 1 ? "" : "s"} to fix.`)} ` +
