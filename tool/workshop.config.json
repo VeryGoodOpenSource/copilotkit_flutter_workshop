@@ -1,4 +1,4 @@
 {
-  "sharedBackendUrl": null,
+  "sharedBackendUrl": "https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit",
   "sharedAgentId": "default"
 }

@@ -22,6 +22,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return CopilotKit(
       runtimeUrl: AppConfig.runtimeUrl,
+      headers: AppConfig.headers,
       child: MaterialApp(
         title: 'Calaverita Generator',
         debugShowCheckedModeBanner: false,

@@ -17,7 +17,7 @@ const runtime = new CopilotRuntime({
 });
 
 const app = new Hono();
-app.use("*", cors({ origin: "*", allowHeaders: ["authorization", "content-type"] }));
+app.use("*", cors({ origin: "*", allowHeaders: ["authorization", "content-type", "x-workshop-code", "x-workshop-session"] }));
 app.get("/health", (c) => c.text("ok"));
 app.route("/", createCopilotHonoHandler({ runtime, basePath: "/api/copilotkit" }));
 

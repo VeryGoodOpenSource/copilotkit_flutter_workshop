@@ -14,6 +14,7 @@
 //   --backend <shared|local|custom>  which backend to use (step 03 always runs its own server)
 //   --url <url>                      the runtime URL, for a custom backend
 //   --agent <id>                     the agent id, when the backend has more than one
+//   --code <code>                    the workshop password of the shared backend (or set WORKSHOP_CODE)
 //   --no-run                         set everything up, then print the commands instead of running them
 //   --no-app                         start the backend and keep it running, without the app
 //   --yes                            never ask, use the defaults and the options given
@@ -132,8 +133,8 @@ function readEnvFile(path) {
   return values;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+async function fetchJson(url, timeout = 8_000) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return response.json();
 }
@@ -166,6 +167,8 @@ const stepDir = `${root}${step.dir}`;
 
 /** The backend the app talks to: its URL and agent id, and the folder to start if it is ours. */
 let backend = null;
+/** The password of the shared backend. The app sends it as a header; a runtime on your machine asks for none. */
+let workshopCode = "";
 
 /** Makes sure `dir` has the model key in its .env, asking for it when it is missing. */
 async function ensureKey(dir) {
@@ -197,6 +200,33 @@ async function useOwnServer({ dir, port, agent }) {
   backend = { url: `http://localhost:${port}/api/copilotkit`, agent: option("agent") ?? agent, folder };
 }
 
+/** POSTs an empty run: 401 means the code is missing or wrong, a 400 means the backend let it through. */
+async function runStatus(base, agent, code) {
+  const response = await fetch(`${base.replace(/\/$/, "")}/agent/${agent}/run`, {
+    method: "POST",
+    headers: code ? { "X-Workshop-Code": code } : {},
+    signal: AbortSignal.timeout(30_000),
+  });
+  return response.status;
+}
+
+/** The password of a backend: none when it asks for none, else the one given, checked before the app starts. */
+async function workshopCodeFor(base, agent) {
+  try {
+    if ((await runStatus(base, agent, "")) !== 401) return "";
+  } catch {
+    return ""; // the doctor already said whether the backend answers
+  }
+  let code = option("code") ?? process.env.WORKSHOP_CODE;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    code ??= (await askSecret("Workshop password (nothing is shown as you type):")) ?? "";
+    if (code && (await runStatus(base, agent, code).catch(() => 0)) !== 401) return code;
+    say(`${paint("31", "✗")} The backend refused that password.`);
+    code = undefined;
+  }
+  return fail("The workshop password was not accepted.", "Ask the organizer for it and pass it with --code <password>.");
+}
+
 async function useExternal(url, defaultAgent) {
   const base = url.replace(/\/$/, "");
   if (!runVisible("node", ["tool/doctor.mjs", "--only", "backend", "--backend", base])) {
@@ -204,7 +234,7 @@ async function useExternal(url, defaultAgent) {
   }
   let agent = option("agent") ?? defaultAgent;
   try {
-    const ids = Object.keys((await fetchJson(`${base}/info`)).agents ?? {});
+    const ids = Object.keys((await fetchJson(`${base}/info`, 30_000)).agents ?? {});
     if (ids.length && !ids.includes(agent)) {
       agent = ids.length === 1 ? ids[0] : await choose("This backend has several agents. Which one?", ids.map((id) => ({ key: id, label: id })), ids[0]);
       say(`Using the agent "${agent}".`);
@@ -231,6 +261,7 @@ if (stepKey !== "00" && step.server) {
   if (kind === "shared") {
     if (!config.sharedBackendUrl) fail("The shared backend is not configured yet.", "Use --backend local, or --backend custom --url <url>.");
     await useExternal(config.sharedBackendUrl, config.sharedAgentId ?? "default");
+    workshopCode = await workshopCodeFor(config.sharedBackendUrl, config.sharedAgentId ?? "default");
   } else if (kind === "custom") {
     say("\nTo make a backend with CopilotKit's tool, run this in another terminal and follow its steps:");
     hint("npx copilotkit with-claude my-backend");
@@ -249,8 +280,10 @@ heading(`${stepKey === "00" ? "2" : "3"}. Getting the app ready`);
 if (!runVisible("fvm", ["flutter", "pub", "get"], stepDir)) fail("`flutter pub get` failed.", "If it can't fetch the CopilotKit SDK, check that you can reach github.com.");
 
 const appDir = `${stepDir}/apps/calaverita_app`;
-const appArgs = ["flutter", "run", "-d", "chrome", ...(backend ? [`--dart-define=RUNTIME_URL=${backend.url}`, `--dart-define=AGENT_ID=${backend.agent}`] : [])];
+const appArgs = ["flutter", "run", "-d", "chrome", ...(backend ? [`--dart-define=RUNTIME_URL=${backend.url}`, `--dart-define=AGENT_ID=${backend.agent}`, ...(workshopCode ? [`--dart-define=WORKSHOP_CODE=${workshopCode}`] : [])] : [])];
 const appCommand = `fvm ${appArgs.join(" ")}`;
+/** The same command for the screen: the password is never printed. */
+const shownCommand = `fvm ${appArgs.map((arg) => (arg.startsWith("--dart-define=WORKSHOP_CODE=") ? "--dart-define=WORKSHOP_CODE=<workshop password>" : arg)).join(" ")}`;
 
 /** Starts the backend of ours in the background and waits until it answers. Returns a function that stops it. */
 async function startBackend() {
@@ -289,7 +322,7 @@ async function startBackend() {
 if (flag("no-run")) {
   heading("Ready. To run it yourself:");
   if (backend?.folder) say(`  1. In one terminal:   cd ${backend.folder.replace(root, "")} && npm start`);
-  say(`  ${backend?.folder ? "2. In another:" : "Run:"}        cd ${appDir.replace(root, "")} && ${appCommand}`);
+  say(`  ${backend?.folder ? "2. In another:" : "Run:"}        cd ${appDir.replace(root, "")} && ${shownCommand}`);
   process.exit(0);
 }
 

@@ -5,6 +5,7 @@ import { createServer } from "node:http";
 import { networkInterfaces } from "node:os";
 import { BuiltInAgent, CopilotRuntime } from "@copilotkit/runtime/v2";
 import { createCopilotNodeListener } from "@copilotkit/runtime/v2/node";
+import { createGate } from "./gate.js";
 
 const basePath = "/api/copilotkit";
 process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
@@ -57,7 +58,20 @@ function lanAddresses(): string[] {
     .map((net) => net!.address);
 }
 
-createServer(createCopilotNodeListener({ runtime, basePath, cors: true })).listen(
+const copilot = createCopilotNodeListener({ runtime, basePath, cors: true });
+
+// The shared deployment sets WORKSHOP_CODE; a runtime on your machine leaves it
+// out and asks for nothing. The app sends the code as X-Workshop-Code and a
+// random id of its run as X-Workshop-Session, which the gate logs and counts
+// (see gate.ts).
+const guarded = createGate(copilot, {
+  code: process.env.WORKSHOP_CODE,
+  maxRunsPerSession: Number(process.env.MAX_RUNS_PER_SESSION ?? 100),
+  maxRunsTotal: Number(process.env.MAX_RUNS_TOTAL ?? 5000),
+  log: console.log,
+});
+
+createServer(guarded).listen(
   port,
   "0.0.0.0",
   () => {

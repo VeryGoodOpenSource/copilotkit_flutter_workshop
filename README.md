@@ -35,7 +35,10 @@ node tool/setup.mjs
 It installs Flutter 3.47.0 through FVM, checks your machine, asks which step to
 run and which backend to use, and starts the app in Chrome. The backend is one of:
 
-- **The shared backend:** nothing to set up.
+- **The shared backend:** the one we host for the workshop, at
+  `https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`.
+  Nothing to set up except the workshop password, which you get at the workshop.
+  It asks for it (hidden as you type), or pass `--code <password>`.
 - **Your own runtime:** it asks for your Anthropic API key (hidden as you type)
   and starts the runtime in `runtime/` for you.
 - **A custom backend:** any CopilotKit runtime you have a URL for, for example one
@@ -187,6 +190,34 @@ The runtime URL is set in **one place per snapshot**:
 `AppConfig.defaultRuntimeUrl`, or run with
 `--dart-define=RUNTIME_URL=<url>`.
 
+The shared backend (`https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit`)
+also asks for a password. The app sends it, and a random id
+of the run, as the `X-Workshop-Code` and `X-Workshop-Session` headers on every
+request:
+
+```sh
+fvm flutter run -d chrome --dart-define=RUNTIME_URL=<url> --dart-define=WORKSHOP_CODE=<password>
+```
+
+`--dart-define` compiles the password into the build, so **a build made with
+`WORKSHOP_CODE` contains the password**: anyone who has that web build can read
+it. Run it locally, and never host a build made with the code.
+
+A runtime on your machine ignores both headers, so leave `WORKSHOP_CODE` out
+there. To host the shared backend, deploy `runtime/` and set `WORKSHOP_CODE` and
+`ANTHROPIC_API_KEY` on the host. The runtime then answers `401` without the
+password. `GET /info` and the CORS preflight stay open.
+
+The runtime also logs one line per run with the session id, and answers `429`
+once a session passes `MAX_RUNS_PER_SESSION` runs (default 100) or all sessions
+pass `MAX_RUNS_TOTAL` (default 5000). Change `WORKSHOP_CODE` after the event,
+and set a spend limit on the Anthropic key: `--max-instances=1` limits
+concurrency, not cost.
+
+A hosted backend that has been idle takes a few seconds to wake up, so the
+first check or message can be slow. To warm it before the event, run the
+`warm_runtime` workflow from the Actions tab.
+
 ## How the code is organized
 
 Each step is a Dart workspace of small packages:
@@ -225,6 +256,8 @@ packages.
 - **The runtime starts but every message fails**: the model or the key is wrong.
   Send a run straight to the runtime and read the `RUN_ERROR` event (see the
   [SDK example README](https://github.com/VGVentures/copilotkit_flutter_sdk/blob/main/example/README.md#troubleshooting)).
+- **"The copilot could not answer" on the shared backend**: the password is
+  missing or wrong (`401`).
 - **`pub get` can't fetch the SDK**: you need access to the SDK repository.
 
 ## License

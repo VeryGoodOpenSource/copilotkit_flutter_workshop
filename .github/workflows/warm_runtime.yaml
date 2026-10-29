@@ -1,0 +1,31 @@
+# Keeps the shared backend awake for a while, so the first participants don't wait
+# for a cold start. Run it by hand from the Actions tab shortly before the event.
+name: warm_runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Runtime URL
+        default: https://calaverita-runtime-641689536796.us-central1.run.app/api/copilotkit
+      minutes:
+        description: How long to keep it warm
+        default: "120"
+
+permissions: {}
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 190
+    steps:
+      - name: Ping /info every 4 minutes
+        env:
+          URL: ${{ inputs.url }}
+          MINUTES: ${{ inputs.minutes }}
+        run: |
+          end=$(( $(date +%s) + MINUTES * 60 ))
+          while [ "$(date +%s)" -lt "$end" ]; do
+            curl --silent --show-error --max-time 60 --output /dev/null --write-out '%{http_code}\n' "$URL/info" || true
+            sleep 240
+          done
